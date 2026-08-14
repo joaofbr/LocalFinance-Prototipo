@@ -7,6 +7,7 @@ import type {
   MonthlyTrendPoint,
   Transaction,
   TransactionInput,
+  TransactionScope,
 } from './types'
 import { financeApi } from './api'
 
@@ -137,8 +138,15 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const invalidate = useInvalidateTransactions()
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: TransactionInput }) =>
-      financeApi.updateTransaction(id, input),
+    mutationFn: ({
+      id,
+      input,
+      scope,
+    }: {
+      id: string
+      input: TransactionInput
+      scope?: TransactionScope
+    }) => financeApi.updateTransaction(id, input, scope),
     onSuccess: invalidate,
   })
 }
@@ -146,7 +154,8 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const invalidate = useInvalidateTransactions()
   return useMutation({
-    mutationFn: (id: string) => financeApi.deleteTransaction(id),
+    mutationFn: ({ id, scope }: { id: string; scope?: TransactionScope }) =>
+      financeApi.deleteTransaction(id, scope),
     onSuccess: invalidate,
   })
 }

@@ -7,7 +7,10 @@ public record TransactionDto(
     DateOnly Date,
     string CategoryId,
     string MemberId,
-    string Description);
+    string Description,
+    string? InstallmentGroupId = null,
+    int? InstallmentNumber = null,
+    int? InstallmentTotal = null);
 
 public record TransactionInput(
     string Type,
@@ -15,4 +18,5 @@ public record TransactionInput(
     DateOnly Date,
     string CategoryId,
     string MemberId,
-    string Description);
+    string Description,
+    int Installments = 1);

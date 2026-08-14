@@ -7,6 +7,7 @@ import type {
   MonthlyTrendPoint,
   Transaction,
   TransactionInput,
+  TransactionScope,
 } from './types'
 
 export const financeApi = {
@@ -99,15 +100,20 @@ export const financeApi = {
   async updateTransaction(
     id: string,
     input: TransactionInput,
+    scope: TransactionScope = 'one',
   ): Promise<Transaction> {
     const { data } = await apiClient.put<Transaction>(
       `/transactions/${id}`,
       input,
+      { params: { scope } },
     )
     return data
   },
 
-  async deleteTransaction(id: string): Promise<void> {
-    await apiClient.delete(`/transactions/${id}`)
+  async deleteTransaction(
+    id: string,
+    scope: TransactionScope = 'one',
+  ): Promise<void> {
+    await apiClient.delete(`/transactions/${id}`, { params: { scope } })
   },
 }

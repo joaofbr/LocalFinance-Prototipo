@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { formatDateShort, formatMoney } from '@/lib/format'
 import { CategoryIconBadge } from './CategoryIconBadge'
+import { InstallmentBadge } from './InstallmentBadge'
 import type { Category, Transaction } from '../types'
 
 interface RecentTransactionsProps {
@@ -56,8 +57,11 @@ export function RecentTransactions({
                   <div className="truncate text-[14px] font-semibold">
                     {t.description}
                   </div>
-                  <div className="text-[12px] text-text-3">
-                    {category.name} · {formatDateShort(t.date)}
+                  <div className="flex items-center gap-1.5 text-[12px] text-text-3">
+                    <span className="truncate">
+                      {category.name} · {formatDateShort(t.date)}
+                    </span>
+                    <InstallmentBadge transaction={t} />
                   </div>
                 </div>
                 <span

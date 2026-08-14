@@ -56,11 +56,23 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
             .ToList();
     }
 
+    public Task<List<Transaction>> ListByGroupAsync(Guid groupId, CancellationToken ct = default) =>
+        db.Transactions
+            .Where(t => t.InstallmentGroupId == groupId)
+            .OrderBy(t => t.InstallmentNumber)
+            .ToListAsync(ct);
+
     public async Task AddAsync(Transaction transaction, CancellationToken ct = default) =>
         await db.Transactions.AddAsync(transaction, ct);
 
+    public async Task AddRangeAsync(IEnumerable<Transaction> items, CancellationToken ct = default) =>
+        await db.Transactions.AddRangeAsync(items, ct);
+
     public void Remove(Transaction transaction) =>
         db.Transactions.Remove(transaction);
+
+    public void RemoveRange(IEnumerable<Transaction> items) =>
+        db.Transactions.RemoveRange(items);
 
     public Task SaveChangesAsync(CancellationToken ct = default) =>
         db.SaveChangesAsync(ct);

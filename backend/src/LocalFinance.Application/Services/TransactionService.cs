@@ -11,6 +11,8 @@ public class TransactionService(
     ICategoryRepository categories,
     IUserRepository users) : ITransactionService
 {
+    private const int MaxInstallments = 60;
+
     public async Task<List<TransactionDto>> ListByMonthAsync(int year, int month, CancellationToken ct = default)
     {
         ValidateMonth(month);
@@ -20,25 +22,86 @@ public class TransactionService(
 
     public async Task<TransactionDto> CreateAsync(TransactionInput input, CancellationToken ct = default)
     {
-        var transaction = new Transaction();
+        var count = input.Installments;
+        if (count is < 1 or > MaxInstallments)
+        {
+            throw new ValidationException(
+                $"O número de parcelas deve estar entre 1 e {MaxInstallments}.");
+        }
+
+        var first = new Transaction();
+        await ApplyAsync(first, input, ct);
+
+        if (count == 1)
+        {
+            await transactions.AddAsync(first, ct);
+            await transactions.SaveChangesAsync(ct);
+            return ToDto(first);
+        }
+
+        var total = first.Amount;
+        var each = decimal.Round(total / count, 2);
+        var groupId = Guid.NewGuid();
+
+        var batch = new List<Transaction>(count);
+        for (var i = 0; i < count; i++)
+        {
+            var isLast = i == count - 1;
+            batch.Add(new Transaction
+            {
+                Type = first.Type,
+                Amount = isLast ? total - (each * (count - 1)) : each,
+                Date = first.Date.AddMonths(i),
+                CategoryId = first.CategoryId,
+                UserId = first.UserId,
+                Description = first.Description,
+                InstallmentGroupId = groupId,
+                InstallmentNumber = i + 1,
+                InstallmentTotal = count,
+            });
+        }
+
+        await transactions.AddRangeAsync(batch, ct);
+        await transactions.SaveChangesAsync(ct);
+        return ToDto(batch[0]);
+    }
+
+    public async Task<TransactionDto> UpdateAsync(
+        Guid id, TransactionInput input, bool applyToGroup = false, CancellationToken ct = default)
+    {
+        var transaction = await GetOrThrowAsync(id, ct);
         await ApplyAsync(transaction, input, ct);
-        await transactions.AddAsync(transaction, ct);
+
+        if (applyToGroup && transaction.InstallmentGroupId is Guid groupId)
+        {
+            var siblings = await transactions.ListByGroupAsync(groupId, ct);
+            foreach (var sibling in siblings.Where(s => s.Id != transaction.Id))
+            {
+                sibling.Type = transaction.Type;
+                sibling.CategoryId = transaction.CategoryId;
+                sibling.UserId = transaction.UserId;
+                sibling.Description = transaction.Description;
+            }
+        }
+
         await transactions.SaveChangesAsync(ct);
         return ToDto(transaction);
     }
 
-    public async Task<TransactionDto> UpdateAsync(Guid id, TransactionInput input, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid id, bool applyToGroup = false, CancellationToken ct = default)
     {
         var transaction = await GetOrThrowAsync(id, ct);
-        await ApplyAsync(transaction, input, ct);
-        await transactions.SaveChangesAsync(ct);
-        return ToDto(transaction);
-    }
 
-    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
-    {
-        var transaction = await GetOrThrowAsync(id, ct);
-        transactions.Remove(transaction);
+        if (applyToGroup && transaction.InstallmentGroupId is Guid groupId)
+        {
+            var siblings = await transactions.ListByGroupAsync(groupId, ct);
+            transactions.RemoveRange(siblings);
+        }
+        else
+        {
+            transactions.Remove(transaction);
+        }
+
         await transactions.SaveChangesAsync(ct);
     }
 
@@ -86,5 +149,8 @@ public class TransactionService(
         transaction.Date,
         transaction.CategoryId.ToString(),
         transaction.UserId.ToString(),
-        transaction.Description);
+        transaction.Description,
+        transaction.InstallmentGroupId?.ToString(),
+        transaction.InstallmentNumber,
+        transaction.InstallmentTotal);
 }

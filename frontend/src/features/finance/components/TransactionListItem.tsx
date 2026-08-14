@@ -1,6 +1,7 @@
 import { Icon } from '@/components/ui/Icon'
 import { formatDateShort, formatMoney, getInitials, hexToRgba } from '@/lib/format'
 import { CategoryIconBadge } from './CategoryIconBadge'
+import { InstallmentBadge } from './InstallmentBadge'
 import type { Category, Member, Transaction } from '../types'
 
 interface TransactionListItemProps {
@@ -51,6 +52,7 @@ export function TransactionListItem({
           <span className="truncate">
             {member.name} · {category.name} · {formatDateShort(transaction.date)}
           </span>
+          <InstallmentBadge transaction={transaction} />
         </div>
       </div>
 

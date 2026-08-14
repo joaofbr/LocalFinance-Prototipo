@@ -22,13 +22,23 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         await service.CreateAsync(input, ct);
 
     [HttpPut("{id:guid}")]
-    public async Task<TransactionDto> Update(Guid id, TransactionInput input, CancellationToken ct) =>
-        await service.UpdateAsync(id, input, ct);
+    public async Task<TransactionDto> Update(
+        Guid id,
+        TransactionInput input,
+        [FromQuery] string? scope,
+        CancellationToken ct) =>
+        await service.UpdateAsync(id, input, IsGroupScope(scope), ct);
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromQuery] string? scope,
+        CancellationToken ct)
     {
-        await service.DeleteAsync(id, ct);
+        await service.DeleteAsync(id, IsGroupScope(scope), ct);
         return NoContent();
     }
+
+    private static bool IsGroupScope(string? scope) =>
+        string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
 }

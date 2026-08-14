@@ -11,6 +11,11 @@ import {
   type TransactionFilters,
 } from '@/features/finance/transactionFilters'
 import { TransactionListItem } from '@/features/finance/components/TransactionListItem'
+import { InstallmentScopeDialog } from '@/features/finance/components/InstallmentScopeDialog'
+import type {
+  Transaction,
+  TransactionScope,
+} from '@/features/finance/types'
 import { usePeriod } from '@/features/finance/PeriodContext'
 import { useTransactionSheet } from '@/features/finance/TransactionSheetProvider'
 import {
@@ -26,6 +31,9 @@ export function TransactionsPage() {
   const { openNew, openEdit } = useTransactionSheet()
   const { showToast } = useToast()
   const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
+  const [confirmingDelete, setConfirmingDelete] = useState<Transaction | null>(
+    null,
+  )
 
   const transactionsQuery = useMonthlyTransactions(year, month)
   const categoriesQuery = useCategories()
@@ -52,10 +60,27 @@ export function TransactionsPage() {
   })
   const summary = getMonthlySummary(filtered)
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id, {
-      onSuccess: () => showToast('Lançamento excluído', 'neutral'),
-    })
+  const removeTransaction = (id: string, scope: TransactionScope) => {
+    deleteMutation.mutate(
+      { id, scope },
+      {
+        onSuccess: () => {
+          setConfirmingDelete(null)
+          showToast(
+            scope === 'all' ? 'Parcelas excluídas' : 'Lançamento excluído',
+            'neutral',
+          )
+        },
+      },
+    )
+  }
+
+  const handleDelete = (transaction: Transaction) => {
+    if (transaction.installmentGroupId) {
+      setConfirmingDelete(transaction)
+      return
+    }
+    removeTransaction(transaction.id, 'one')
   }
 
   return (
@@ -94,7 +119,7 @@ export function TransactionsPage() {
                   category={categoryById.get(transaction.categoryId)}
                   member={memberById.get(transaction.memberId)}
                   onEdit={() => openEdit(transaction)}
-                  onDelete={() => handleDelete(transaction.id)}
+                  onDelete={() => handleDelete(transaction)}
                 />
               ))}
             </div>
@@ -121,6 +146,16 @@ export function TransactionsPage() {
           </>
         )}
       </div>
+
+      {confirmingDelete && (
+        <InstallmentScopeDialog
+          transaction={confirmingDelete}
+          action="delete"
+          busy={deleteMutation.isPending}
+          onChoose={(scope) => removeTransaction(confirmingDelete.id, scope)}
+          onCancel={() => setConfirmingDelete(null)}
+        />
+      )}
     </div>
   )
 }

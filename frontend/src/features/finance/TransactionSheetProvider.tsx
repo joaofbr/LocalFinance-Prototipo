@@ -2,13 +2,14 @@ import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
+import { InstallmentScopeDialog } from './components/InstallmentScopeDialog'
 import {
   useCategories,
   useCreateTransaction,
   useMembers,
   useUpdateTransaction,
 } from './hooks'
-import type { Transaction } from './types'
+import type { Transaction, TransactionInput, TransactionScope } from './types'
 
 interface TransactionSheetContextValue {
   openNew: () => void
@@ -22,16 +23,41 @@ type SheetState = { mode: 'closed' } | { mode: 'new' } | { mode: 'edit'; transac
 
 export function TransactionSheetProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SheetState>({ mode: 'closed' })
+  const [pendingEdit, setPendingEdit] = useState<{
+    id: string
+    input: TransactionInput
+  } | null>(null)
   const { showToast } = useToast()
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
   const createMutation = useCreateTransaction()
   const updateMutation = useUpdateTransaction()
 
-  const close = () => setState({ mode: 'closed' })
+  const close = () => {
+    setPendingEdit(null)
+    setState({ mode: 'closed' })
+  }
 
   const editing = state.mode === 'edit' ? state.transaction : null
   const saving = createMutation.isPending || updateMutation.isPending
+
+  const applyEdit = (
+    id: string,
+    input: TransactionInput,
+    scope: TransactionScope,
+  ) => {
+    updateMutation.mutate(
+      { id, input, scope },
+      {
+        onSuccess: () => {
+          close()
+          showToast(
+            scope === 'all' ? 'Parcelas atualizadas' : 'Lançamento atualizado',
+          )
+        },
+      },
+    )
+  }
 
   return (
     <TransactionSheetContext.Provider
@@ -51,25 +77,33 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
           saving={saving}
           onClose={close}
           onSubmit={(input) => {
-            if (editing) {
-              updateMutation.mutate(
-                { id: editing.id, input },
-                {
-                  onSuccess: () => {
-                    close()
-                    showToast('Lançamento atualizado')
-                  },
-                },
-              )
-            } else {
+            if (!editing) {
               createMutation.mutate(input, {
                 onSuccess: () => {
                   close()
                   showToast('Lançamento salvo com sucesso')
                 },
               })
+              return
             }
+            if (editing.installmentGroupId) {
+              setPendingEdit({ id: editing.id, input })
+              return
+            }
+            applyEdit(editing.id, input, 'one')
           }}
+        />
+      )}
+
+      {pendingEdit && editing && (
+        <InstallmentScopeDialog
+          transaction={editing}
+          action="edit"
+          busy={updateMutation.isPending}
+          onChoose={(scope) =>
+            applyEdit(pendingEdit.id, pendingEdit.input, scope)
+          }
+          onCancel={() => setPendingEdit(null)}
         />
       )}
     </TransactionSheetContext.Provider>

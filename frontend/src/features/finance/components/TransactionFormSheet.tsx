@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
-import { hexToRgba } from '@/lib/format'
+import { formatCents, hexToRgba } from '@/lib/format'
 import { AmountInput } from './AmountInput'
 import type {
   Category,
@@ -21,6 +21,10 @@ interface TransactionFormSheetProps {
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
+const INSTALLMENT_OPTIONS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 24, 36, 48, 60,
+]
+
 export function TransactionFormSheet({
   editing,
   categories,
@@ -39,6 +43,7 @@ export function TransactionFormSheet({
     editing?.memberId ?? members[0]?.id ?? '',
   )
   const [description, setDescription] = useState(editing?.description ?? '')
+  const [installments, setInstallments] = useState(1)
   const [errors, setErrors] = useState<{ amount?: string; category?: string }>(
     {},
   )
@@ -47,9 +52,13 @@ export function TransactionFormSheet({
     (c) => c.active && (c.kind === type || c.kind === 'both'),
   )
 
+  const canSplit = !editing && type === 'expense'
+  const splitting = canSplit && installments > 1
+
   const changeType = (next: TransactionType) => {
     setType(next)
     setCategoryId('')
+    setInstallments(1)
     setErrors((e) => ({ ...e, category: undefined }))
   }
 
@@ -69,6 +78,7 @@ export function TransactionFormSheet({
       categoryId,
       memberId,
       description: description.trim() || category?.name || 'Lançamento',
+      installments: splitting ? installments : 1,
     })
   }
 
@@ -122,6 +132,11 @@ export function TransactionFormSheet({
           {errors.amount && (
             <div className="mb-2 mt-1.5 text-center text-[12.5px] font-semibold text-expense">
               {errors.amount}
+            </div>
+          )}
+          {splitting && cents > 0 && (
+            <div className="mt-1.5 text-center text-[12.5px] font-semibold text-text-2">
+              {installments}x de R$ {formatCents(Math.round(cents / installments))}
             </div>
           )}
 
@@ -188,6 +203,28 @@ export function TransactionFormSheet({
                 ))}
               </select>
             </div>
+            {canSplit && (
+              <div className="flex-1">
+                <label
+                  htmlFor="installments"
+                  className="mb-1.5 block text-[13px] font-semibold text-text-2"
+                >
+                  Parcelas
+                </label>
+                <select
+                  id="installments"
+                  value={installments}
+                  onChange={(e) => setInstallments(Number(e.target.value))}
+                  className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+                >
+                  {INSTALLMENT_OPTIONS.map((count) => (
+                    <option key={count} value={count}>
+                      {count === 1 ? 'À vista' : `${count}x`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <label className="mb-1.5 mt-4 block text-[13px] font-semibold text-text-2">
