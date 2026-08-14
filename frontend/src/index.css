@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text2);
+  --color-text-3: var(--text3);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-weak: var(--primary-weak);
+  --color-primary-weak-2: var(--primary-weak2);
+  --color-income: var(--income);
+  --color-income-bg: var(--income-bg);
+  --color-expense: var(--expense);
+  --color-expense-bg: var(--expense-bg);
+  --color-neutral: var(--neutral);
+  --color-neutral-bg: var(--neutral-bg);
+
+  --shadow-card: var(--shadow);
+  --shadow-card-md: var(--shadow-md);
+  --shadow-card-lg: var(--shadow-lg);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+:root,
+[data-theme='light'] {
+  --bg: #f5f7f6;
+  --surface: #ffffff;
+  --surface2: #f1f4f3;
+  --border: #e7eae9;
+  --border-strong: #d8dedb;
+  --text: #0e1a16;
+  --text2: #566169;
+  --text3: #9aa4ac;
+  --primary: #059669;
+  --primary-strong: #047857;
+  --primary-fg: #ffffff;
+  --primary-weak: #ecfdf5;
+  --primary-weak2: #d1fae5;
+  --income: #059669;
+  --income-bg: #ecfdf5;
+  --expense: #dc2626;
+  --expense-bg: #fef2f2;
+  --neutral: #64748b;
+  --neutral-bg: #f1f5f9;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 6px 20px -6px rgba(16, 24, 40, 0.12);
+  --shadow-lg: 0 18px 40px -12px rgba(16, 24, 40, 0.22);
+  --overlay: rgba(15, 23, 25, 0.45);
+}
+
+[data-theme='dark'] {
+  --bg: #0a0f0d;
+  --surface: #121a18;
+  --surface2: #1a2421;
+  --border: #243029;
+  --border-strong: #2f3d36;
+  --text: #eef3f1;
+  --text2: #a3b0ab;
+  --text3: #647069;
+  --primary: #10b981;
+  --primary-strong: #34d399;
+  --primary-fg: #04130d;
+  --primary-weak: #0a261c;
+  --primary-weak2: #0f3527;
+  --income: #34d399;
+  --income-bg: #0a261c;
+  --expense: #f87171;
+  --expense-bg: #2a1414;
+  --neutral: #94a3b8;
+  --neutral-bg: #1a2430;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::placeholder {
+  color: var(--text3);
+}
+
+/*
+ * Área segura do iOS. No modo standalone (app na tela de início, sem a barra
+ * do Safari) o conteúdo vai até a borda inferior, onde fica o indicador de
+ * home. Fora do standalone os insets valem 0 e nada muda.
+ */
+.safe-nav {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+.safe-fab {
+  bottom: calc(30px + env(safe-area-inset-bottom));
+}
+
+.safe-content {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
