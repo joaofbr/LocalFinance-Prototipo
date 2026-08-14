@@ -27,17 +27,18 @@ npm run preview   # serve o build de produção
 
 ### Ao mexer nas dependências
 
-O build da Cloudflare roda `npm ci` com **npm 10.9.2**, e um `package-lock.json`
-gerado pelo npm 11 é rejeitado por essa versão. Depois de adicionar ou atualizar
-qualquer pacote, regere o lock com a mesma versão do build:
+Use `npm install` normal e comite o `package-lock.json` resultante.
 
-```bash
-npx npm@10.9.2 install --package-lock-only
-```
+Não use `npm install --package-lock-only`: ele grava no lock apenas os binários
+nativos da plataforma atual, e o build na Cloudflare (Linux) quebra com
+`Cannot find native binding` ao procurar `@rolldown/binding-linux-x64-gnu`.
+Um lock saudável tem os 14 binários do rolldown, não um.
 
-Sem isso o deploy falha com `npm ci can only install packages when your
-package.json and package-lock.json are in sync`, listando pacotes que existem
-localmente mas não no lock.
+O build na Cloudflare usa `npm install`, não `npm ci`, através de
+`SKIP_DEPENDENCY_INSTALL=1` mais o comando `npm install && npm run build`.
+A validação estrita do `npm ci` rejeita este conjunto de dependências por
+causa de duas versões de `ajv` na árvore do ESLint, um problema do npm que
+independe do nosso código.
 
 ## Configuração
 
