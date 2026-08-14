@@ -33,6 +33,7 @@ export function MembersPage() {
 
   const members = membersQuery.data ?? []
   const saving = createMutation.isPending || updateMutation.isPending
+  const isAdmin = user?.role !== 'Member'
 
   const handleSubmit = (input: MemberInput) => {
     if (modal?.editing) {
@@ -114,21 +115,25 @@ export function MembersPage() {
             </h2>
             <span className="flex items-center gap-1 rounded-full bg-primary-weak px-2 py-[3px] text-[11px] font-semibold text-primary">
               <Icon name="shield" size={12} />
-              Somente Admin
+              {isAdmin ? 'Somente Admin' : 'Somente leitura'}
             </span>
           </div>
           <p className="mt-[3px] text-[13.5px] text-text-2">
-            Gerencie quem tem acesso ao painel da família.
+            {isAdmin
+              ? 'Gerencie quem tem acesso ao painel da família.'
+              : 'Veja quem tem acesso ao painel. Só o Admin pode fazer alterações.'}
           </p>
         </div>
-        <Button
-          type="button"
-          className="flex-shrink-0"
-          onClick={() => setModal({ editing: null })}
-        >
-          <Icon name="plus" size={18} />
-          Cadastrar
-        </Button>
+        {isAdmin && (
+          <Button
+            type="button"
+            className="flex-shrink-0"
+            onClick={() => setModal({ editing: null })}
+          >
+            <Icon name="plus" size={18} />
+            Cadastrar
+          </Button>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
@@ -147,7 +152,8 @@ export function MembersPage() {
               onToggle={() => handleToggle(member)}
               onResend={() => handleResend(member)}
               onDelete={() => setConfirmingDelete(member)}
-              canDelete={member.id !== user?.id}
+              canManage={isAdmin}
+              canDelete={isAdmin && member.id !== user?.id}
               resending={
                 resendMutation.isPending &&
                 resendMutation.variables === member.id
@@ -187,6 +193,7 @@ interface MemberRowProps {
   onToggle: () => void
   onResend: () => void
   onDelete: () => void
+  canManage: boolean
   canDelete: boolean
   resending: boolean
 }
@@ -197,6 +204,7 @@ function MemberRow({
   onToggle,
   onResend,
   onDelete,
+  canManage,
   canDelete,
   resending,
 }: MemberRowProps) {
@@ -238,7 +246,7 @@ function MemberRow({
       >
         {member.active ? 'Ativo' : 'Inativo'}
       </span>
-      {member.passwordPending && member.active && (
+      {canManage && member.passwordPending && member.active && (
         <button
           type="button"
           onClick={onResend}
@@ -249,22 +257,26 @@ function MemberRow({
           {resending ? 'Enviando...' : 'Reenviar convite'}
         </button>
       )}
-      <button
-        type="button"
-        onClick={onEdit}
-        title="Editar"
-        aria-label={`Editar ${member.name}`}
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
-      >
-        <Icon name="pencil" size={16} />
-      </button>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
-      >
-        {member.active ? 'Desativar' : 'Reativar'}
-      </button>
+      {canManage && (
+        <button
+          type="button"
+          onClick={onEdit}
+          title="Editar"
+          aria-label={`Editar ${member.name}`}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
+        >
+          <Icon name="pencil" size={16} />
+        </button>
+      )}
+      {canManage && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
+        >
+          {member.active ? 'Desativar' : 'Reativar'}
+        </button>
+      )}
       {canDelete && (
         <button
           type="button"

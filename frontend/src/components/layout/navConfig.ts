@@ -12,7 +12,13 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/transactions', label: 'Transações', icon: 'list' },
   { to: '/reports', label: 'Relatórios', icon: 'barChart' },
   { to: '/categories', label: 'Categorias', icon: 'tag' },
-  { to: '/members', label: 'Integrantes', icon: 'users', adminOnly: true },
+  { to: '/members', label: 'Integrantes', icon: 'users' },
+  { to: '/profile', label: 'Perfil', icon: 'user' },
+]
+
+export const MORE_NAV_ITEMS: NavItem[] = [
+  { to: '/categories', label: 'Categorias', icon: 'tag' },
+  { to: '/members', label: 'Integrantes', icon: 'users' },
   { to: '/profile', label: 'Perfil', icon: 'user' },
 ]
 
@@ -20,7 +26,7 @@ export const BOTTOM_NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Início', icon: 'grid' },
   { to: '/transactions', label: 'Transações', icon: 'list' },
   { to: '/reports', label: 'Relatórios', icon: 'barChart' },
-  { to: '/profile', label: 'Mais', icon: 'more' },
+  { to: '/mais', label: 'Mais', icon: 'more' },
 ]
 
 const TITLES: Record<string, string> = {
@@ -30,6 +36,7 @@ const TITLES: Record<string, string> = {
   '/categories': 'Categorias',
   '/members': 'Integrantes',
   '/profile': 'Perfil',
+  '/mais': 'Mais',
 }
 
 export function getPageTitle(pathname: string): string {

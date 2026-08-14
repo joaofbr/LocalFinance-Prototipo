@@ -12,6 +12,7 @@ import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
 import { MembersPage } from '@/features/members/pages/MembersPage'
 import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
+import { MorePage } from '@/features/more/pages/MorePage'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/mais" element={<MorePage />} />
         </Route>
       </Route>
 
