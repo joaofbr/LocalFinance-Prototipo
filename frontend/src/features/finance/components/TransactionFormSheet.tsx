@@ -172,7 +172,7 @@ export function TransactionFormSheet({
                 className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
               />
             </div>
-            <div className="flex-1">
+            <div className="flex-1" hidden>
               <label className="mb-1.5 block text-[13px] font-semibold text-text-2">
                 Integrante
               </label>
@@ -243,9 +243,8 @@ function TypeButton({ label, tone, active, onClick }: TypeButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-3 text-[14.5px] font-bold ${
-        active ? activeClass : 'border-border-strong bg-surface-2 text-text-2'
-      }`}
+      className={`flex-1 rounded-xl border py-3 text-[14.5px] font-bold ${active ? activeClass : 'border-border-strong bg-surface-2 text-text-2'
+        }`}
     >
       {label}
     </button>
