@@ -150,6 +150,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
+    .AllowAnonymous();
+
 app.UseCors(FrontendCors);
 app.UseAuthentication();
 app.UseAuthorization();
