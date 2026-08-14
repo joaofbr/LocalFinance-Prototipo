@@ -8,6 +8,7 @@ import {
 } from '@/features/finance/TransactionSheetProvider'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
+import { PullToRefresh } from './PullToRefresh'
 import { getPageTitle } from './navConfig'
 
 export function AppLayout() {
@@ -27,6 +28,7 @@ function AppShell() {
 
   return (
     <div className="flex min-h-screen">
+      <PullToRefresh />
       <Sidebar />
 
       <main className="flex min-w-0 flex-1 flex-col">
