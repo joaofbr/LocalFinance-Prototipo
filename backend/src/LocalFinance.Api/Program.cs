@@ -103,7 +103,7 @@ builder.Services
 builder.Services.AddAuthorization();
 
 const string FrontendCors = "Frontend";
-string[] devOrigins = ["http://localhost:5173", "capacitor://localhost", "http://localhost"];
+string[] devOrigins = ["http://localhost:5173", "capacitor://localhost", "http://localhost", "https://localfinance-api.onrender.com"];
 var configuredOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
 var allowedOrigins = devOrigins.Concat(configuredOrigins)
     .Select(o => o.TrimEnd('/'))
