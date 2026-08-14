@@ -49,7 +49,14 @@ export function MembersPage() {
       createMutation.mutate(input, {
         onSuccess: (member) => {
           setModal(null)
-          showToast(`${member.name} cadastrado — convite enviado por e-mail`)
+          if (member.inviteSent === false) {
+            showToast(
+              `${member.name} foi cadastrado, mas o convite não pôde ser enviado. Use "Reenviar convite" para tentar de novo.`,
+              'warning',
+            )
+          } else {
+            showToast(`${member.name} cadastrado, convite enviado por e-mail`)
+          }
         },
       })
     }
@@ -72,7 +79,10 @@ export function MembersPage() {
     resendMutation.mutate(member.id, {
       onSuccess: () => showToast(`Convite reenviado para ${member.email}`),
       onError: () =>
-        showToast('Não foi possível reenviar o convite', 'neutral'),
+        showToast(
+          `Não foi possível reenviar o convite para ${member.email}. O e-mail não saiu.`,
+          'warning',
+        ),
     })
   }
 

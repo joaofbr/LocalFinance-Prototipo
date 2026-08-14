@@ -102,11 +102,6 @@ body {
   color: var(--text3);
 }
 
-/*
- * Área segura do iOS. No modo standalone (app na tela de início, sem a barra
- * do Safari) o conteúdo vai até a borda inferior, onde fica o indicador de
- * home. Fora do standalone os insets valem 0 e nada muda.
- */
 .safe-nav {
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
 }

@@ -18,7 +18,7 @@ public class MemberService(
     public async Task<List<MemberDto>> ListAsync(CancellationToken ct = default)
     {
         var list = await users.ListAsync(ct);
-        return list.Select(ToDto).ToList();
+        return list.Select(user => ToDto(user)).ToList();
     }
 
     public async Task<MemberDto> CreateAsync(MemberInput input, CancellationToken ct = default)
@@ -41,18 +41,20 @@ public class MemberService(
         await users.AddAsync(user, ct);
         await users.SaveChangesAsync(ct);
 
+        var inviteSent = true;
         try
         {
             await invites.SendInviteAsync(user, ct);
         }
         catch (Exception ex)
         {
+            inviteSent = false;
             logger.LogError(ex,
                 "Integrante {Email} criado, mas o convite não pôde ser enviado.",
                 user.Email);
         }
 
-        return ToDto(user);
+        return ToDto(user, inviteSent);
     }
 
     public async Task DeleteAsync(Guid id, Guid requestedBy, CancellationToken ct = default)
@@ -136,12 +138,13 @@ public class MemberService(
         return email;
     }
 
-    private static MemberDto ToDto(User user) => new(
+    private static MemberDto ToDto(User user, bool? inviteSent = null) => new(
         user.Id.ToString(),
         user.Name,
         user.Email,
         user.Role.ToDto(),
         user.Active,
         user.Color,
-        string.IsNullOrEmpty(user.PasswordHash));
+        string.IsNullOrEmpty(user.PasswordHash),
+        inviteSent);
 }

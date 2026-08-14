@@ -56,6 +56,7 @@ export interface Member {
   active: boolean
   color: string
   passwordPending: boolean
+  inviteSent?: boolean | null
 }
 
 export interface MemberInput {

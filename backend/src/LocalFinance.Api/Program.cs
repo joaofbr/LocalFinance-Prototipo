@@ -15,8 +15,6 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Plataformas de container (Koyeb, Render, Cloud Run) informam a porta pela
-// variável PORT e esperam que o processo escute em todas as interfaces.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
@@ -66,8 +64,6 @@ else
 {
     if (smtp.IsMissingPassword)
     {
-        // Sem este aviso a configuração parcial passa despercebida: o convite vai
-        // para o log e o administrador acha que o e-mail saiu.
         Console.WriteLine(
             "AVISO: Smtp:User está definido mas Smtp:Password está vazio. Os convites "
             + "vão para o log em vez do e-mail. Defina a senha com 'dotnet user-secrets "
@@ -106,9 +102,6 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
-// Origens liberadas no CORS. As de desenvolvimento ficam no código; a do
-// frontend publicado entra por configuração (Cors:Origins), porque muda por
-// ambiente e não pode ser fixada aqui.
 const string FrontendCors = "Frontend";
 string[] devOrigins = ["http://localhost:5173", "capacitor://localhost", "http://localhost"];
 var configuredOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
@@ -146,9 +139,6 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Aplica as migrations em todo ambiente: em produção o banco nasce vazio e não
-// há passo manual no deploy, então deixar isso só em Development faria a API
-// subir contra um schema inexistente.
 using (var scope = app.Services.CreateScope())
 {
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
