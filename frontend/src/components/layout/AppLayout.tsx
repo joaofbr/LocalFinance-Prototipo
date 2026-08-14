@@ -1,6 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { Logo } from '@/components/ui/Logo'
-import { Icon } from '@/components/ui/Icon'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { PeriodProvider } from '@/features/finance/PeriodContext'
 import {
@@ -44,15 +43,6 @@ function AppShell() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              type="button"
-              title="Notificações"
-              aria-label="Notificações"
-              className="relative hidden h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface text-text-2 lg:flex"
-            >
-              <Icon name="bell" size={19} />
-              <span className="absolute right-2.5 top-2.5 h-[7px] w-[7px] rounded-full bg-expense" />
-            </button>
           </div>
         </header>
 

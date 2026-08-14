@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import type { IconName } from '@/components/ui/Icon'
@@ -9,7 +8,6 @@ import { getInitials } from '@/lib/format'
 export function ProfilePage() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
-  const [notifications, setNotifications] = useState(true)
 
   const name = user?.name ?? 'Usuário'
   const isAdmin = user?.role !== 'Member'
@@ -44,28 +42,6 @@ export function ProfilePage() {
             className="rounded-[11px] border border-border-strong px-3.5 py-[9px] text-[13px] font-semibold text-text hover:bg-surface-2"
           >
             Alternar
-          </button>
-        </SettingsRow>
-        <SettingsRow
-          icon="bell"
-          title="Notificações"
-          subtitle="Alertas de novos lançamentos"
-        >
-          <button
-            type="button"
-            role="switch"
-            aria-checked={notifications}
-            aria-label="Notificações"
-            onClick={() => setNotifications((current) => !current)}
-            className={`relative h-6 w-[42px] flex-shrink-0 rounded-full transition-colors ${
-              notifications ? 'bg-primary' : 'bg-border-strong'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-                notifications ? 'right-0.5' : 'left-0.5'
-              }`}
-            />
           </button>
         </SettingsRow>
         <SettingsRow icon="globe" title="Idioma" subtitle="Português (Brasil)" />

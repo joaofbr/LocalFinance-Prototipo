@@ -36,4 +36,8 @@ export const authApi = {
   async setPassword(token: string, password: string): Promise<void> {
     await apiClient.post('/auth/set-password', { token, password })
   },
+
+  async forgotPassword(email: string): Promise<void> {
+    await apiClient.post('/auth/forgot-password', { email })
+  },
 }

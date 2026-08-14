@@ -21,6 +21,13 @@ public class AuthController(IAuthService auth, IMemberInviteService invites) : C
         return NoContent();
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)
+    {
+        await invites.SendPasswordResetAsync(request.Email, ct);
+        return NoContent();
+    }
+
     [HttpPost("login")]
     public async Task<AuthResponse> Login(LoginRequest request, CancellationToken ct) =>
         await auth.LoginAsync(request, ct);

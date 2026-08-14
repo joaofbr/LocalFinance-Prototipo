@@ -19,6 +19,30 @@ public class MemberInviteService(
 
     public async Task SendInviteAsync(User user, CancellationToken ct = default)
     {
+        var link = await CreateLinkAsync(user, ct);
+        await email.SendAsync(
+            InviteEmail.Build(user.Name, user.Email, link, options.ExpiryHours),
+            ct);
+    }
+
+    public async Task SendPasswordResetAsync(string address, CancellationToken ct = default)
+    {
+        var normalized = address.Trim().ToLowerInvariant();
+        var user = await users.GetByEmailAsync(normalized, ct);
+
+        if (user is null || !user.Active)
+        {
+            return;
+        }
+
+        var link = await CreateLinkAsync(user, ct);
+        await email.SendAsync(
+            PasswordResetEmail.Build(user.Name, user.Email, link, options.ExpiryHours),
+            ct);
+    }
+
+    private async Task<string> CreateLinkAsync(User user, CancellationToken ct)
+    {
         var now = DateTime.UtcNow;
         await tokens.InvalidatePendingAsync(user.Id, now, ct);
 
@@ -34,10 +58,7 @@ public class MemberInviteService(
             ct);
         await tokens.SaveChangesAsync(ct);
 
-        var link = $"{options.FrontendBaseUrl.TrimEnd('/')}/definir-senha?token={Uri.EscapeDataString(raw)}";
-        await email.SendAsync(
-            InviteEmail.Build(user.Name, user.Email, link, options.ExpiryHours),
-            ct);
+        return $"{options.FrontendBaseUrl.TrimEnd('/')}/definir-senha?token={Uri.EscapeDataString(raw)}";
     }
 
     public async Task<InviteTargetDto> ValidateTokenAsync(string token, CancellationToken ct = default)

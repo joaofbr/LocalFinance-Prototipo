@@ -7,6 +7,8 @@ public interface IMemberInviteService
 {
     Task SendInviteAsync(User user, CancellationToken ct = default);
 
+    Task SendPasswordResetAsync(string email, CancellationToken ct = default);
+
     Task<InviteTargetDto> ValidateTokenAsync(string token, CancellationToken ct = default);
 
     Task SetPasswordAsync(SetPasswordRequest request, CancellationToken ct = default);

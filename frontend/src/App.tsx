@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { SetPasswordPage } from '@/features/auth/pages/SetPasswordPage'
+import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicOnlyRoute } from '@/routes/PublicOnlyRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -20,6 +21,7 @@ export default function App() {
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>

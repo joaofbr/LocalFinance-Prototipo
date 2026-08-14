@@ -75,12 +75,12 @@ export function LoginPage() {
         />
 
         <div className="mb-[22px] text-right">
-          <a
-            href="#"
+          <Link
+            to="/esqueci-senha"
             className="text-[13px] font-semibold text-primary no-underline"
           >
             Esqueci minha senha
-          </a>
+          </Link>
         </div>
 
         <Button
