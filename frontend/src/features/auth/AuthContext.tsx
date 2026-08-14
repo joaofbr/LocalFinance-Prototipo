@@ -30,6 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
   const logout = useCallback(() => {
+    const refreshToken = tokenStorage.getCachedRefresh()
+    if (refreshToken) {
+      void authApi.logout(refreshToken).catch(() => undefined)
+    }
     void tokenStorage.clear()
     setUser(null)
     setStatus('unauthenticated')
@@ -65,14 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (payload: LoginRequest) => {
     const result = await authApi.login(payload)
-    await tokenStorage.set(result.token)
+    await tokenStorage.set(result.token, result.refreshToken)
     setUser(result.user)
     setStatus('authenticated')
   }, [])
 
   const register = useCallback(async (payload: RegisterRequest) => {
     const result = await authApi.register(payload)
-    await tokenStorage.set(result.token)
+    await tokenStorage.set(result.token, result.refreshToken)
     setUser(result.user)
     setStatus('authenticated')
   }, [])

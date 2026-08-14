@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import type { IconName } from '@/components/ui/Icon'
 import { useTheme } from '@/components/theme/ThemeProvider'
+import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/features/auth/useAuth'
 import { getInitials } from '@/lib/format'
+import { ChangePasswordModal } from '../components/ChangePasswordModal'
 
 export function ProfilePage() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { showToast } = useToast()
+  const [changingPassword, setChangingPassword] = useState(false)
 
   const name = user?.name ?? 'Usuário'
   const isAdmin = user?.role !== 'Member'
@@ -44,6 +49,19 @@ export function ProfilePage() {
             Alternar
           </button>
         </SettingsRow>
+        <SettingsRow
+          icon="lock"
+          title="Senha"
+          subtitle="Trocar a senha de acesso"
+        >
+          <button
+            type="button"
+            onClick={() => setChangingPassword(true)}
+            className="rounded-[11px] border border-border-strong px-3.5 py-[9px] text-[13px] font-semibold text-text hover:bg-surface-2"
+          >
+            Trocar
+          </button>
+        </SettingsRow>
         <SettingsRow icon="globe" title="Idioma" subtitle="Português (Brasil)" />
       </div>
 
@@ -55,6 +73,16 @@ export function ProfilePage() {
         <Icon name="logOut" size={18} />
         Sair da conta
       </button>
+
+      {changingPassword && (
+        <ChangePasswordModal
+          onClose={() => setChangingPassword(false)}
+          onSuccess={() => {
+            setChangingPassword(false)
+            showToast('Senha alterada')
+          }}
+        />
+      )}
     </div>
   )
 }

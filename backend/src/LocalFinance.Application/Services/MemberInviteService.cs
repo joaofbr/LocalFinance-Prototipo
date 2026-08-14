@@ -15,7 +15,7 @@ public class MemberInviteService(
     IEmailSender email,
     InviteOptions options) : IMemberInviteService
 {
-    private const int MinPasswordLength = 4;
+    private const int MinPasswordLength = 8;
 
     public async Task SendInviteAsync(User user, CancellationToken ct = default)
     {

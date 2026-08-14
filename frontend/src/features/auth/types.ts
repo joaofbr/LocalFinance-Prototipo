@@ -11,6 +11,7 @@ export interface AuthResponse {
   token: string
   expiresAt: string
   user: User
+  refreshToken: string
 }
 
 export interface LoginRequest {

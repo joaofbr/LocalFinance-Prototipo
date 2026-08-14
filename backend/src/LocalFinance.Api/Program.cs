@@ -1,5 +1,6 @@
 using System.Text;
 using LocalFinance.Api.Middleware;
+using LocalFinance.Api.Security;
 using LocalFinance.Application.Common;
 using LocalFinance.Application.Interfaces;
 using LocalFinance.Application.Services;
@@ -23,6 +24,8 @@ if (!string.IsNullOrWhiteSpace(port))
 
 builder.Services.AddControllers();
 
+builder.Services.AddLocalFinanceRateLimiting();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
@@ -30,6 +33,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IPasswordSetupTokenRepository, PasswordSetupTokenRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IMemberInviteService, MemberInviteService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -42,6 +46,10 @@ builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(InviteOptions.SectionName).Get<InviteOptions>()
         ?? new InviteOptions());
+
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection(RefreshTokenOptions.SectionName).Get<RefreshTokenOptions>()
+        ?? new RefreshTokenOptions());
 
 builder.Services.Configure<BrevoOptions>(
     builder.Configuration.GetSection(BrevoOptions.SectionName));
@@ -150,7 +158,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseRateLimiter();
 
 using (var scope = app.Services.CreateScope())
 {

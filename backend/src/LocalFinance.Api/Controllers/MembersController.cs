@@ -3,6 +3,7 @@ using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LocalFinance.Api.Controllers;
 
@@ -38,6 +39,7 @@ public class MembersController(IMemberService service) : ControllerBase
         return NoContent();
     }
 
+    [EnableRateLimiting(RateLimitPolicies.Email)]
     [HttpPost("{id:guid}/resend-invite")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ResendInvite(Guid id, CancellationToken ct)
