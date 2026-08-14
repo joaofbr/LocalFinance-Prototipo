@@ -1,7 +1,7 @@
 import { Icon } from '@/components/ui/Icon'
 import type { Transaction, TransactionScope } from '../types'
 
-interface InstallmentScopeDialogProps {
+interface SeriesScopeDialogProps {
   transaction: Transaction
   action: 'edit' | 'delete'
   busy?: boolean
@@ -9,16 +9,28 @@ interface InstallmentScopeDialogProps {
   onCancel: () => void
 }
 
-export function InstallmentScopeDialog({
+export function SeriesScopeDialog({
   transaction,
   action,
   busy = false,
   onChoose,
   onCancel,
-}: InstallmentScopeDialogProps) {
+}: SeriesScopeDialogProps) {
   const deleting = action === 'delete'
-  const current = transaction.installmentNumber ?? 1
-  const total = transaction.installmentTotal ?? 1
+  const fixed = transaction.seriesKind === 'fixed'
+  const index = transaction.seriesIndex ?? 1
+  const total = transaction.seriesTotal ?? 1
+  const remaining = total - index + 1
+
+  const broadScope: TransactionScope = fixed ? 'future' : 'all'
+
+  const broadLabel = fixed
+    ? deleting
+      ? `Encerrar: excluir os ${remaining} meses restantes`
+      : `Aplicar deste mês em diante (${remaining} meses)`
+    : deleting
+      ? `Excluir todas as ${total} parcelas`
+      : `Aplicar às ${total} parcelas`
 
   return (
     <div
@@ -31,7 +43,13 @@ export function InstallmentScopeDialog({
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <h2 className="text-[17px] font-extrabold tracking-tight">
-            {deleting ? 'Excluir parcela' : 'Editar parcela'}
+            {deleting
+              ? fixed
+                ? 'Excluir gasto fixo'
+                : 'Excluir parcela'
+              : fixed
+                ? 'Editar gasto fixo'
+                : 'Editar parcela'}
           </h2>
           <button
             type="button"
@@ -44,10 +62,11 @@ export function InstallmentScopeDialog({
         </div>
 
         <p className="mb-5 text-[13.5px] leading-relaxed text-text-2">
-          “{transaction.description}” é a parcela {current} de {total}.{' '}
-          {deleting
-            ? 'O que você quer excluir?'
-            : 'A que a alteração deve valer?'}
+          “{transaction.description}” é{' '}
+          {fixed
+            ? `o mês ${index} de ${total} de um lançamento fixo`
+            : `a parcela ${index} de ${total}`}
+          . {deleting ? 'O que você quer excluir?' : 'A que a alteração vale?'}
         </p>
 
         <div className="flex flex-col gap-2.5">
@@ -57,30 +76,27 @@ export function InstallmentScopeDialog({
             onClick={() => onChoose('one')}
             className="rounded-[14px] border border-border-strong px-4 py-3 text-[14px] font-semibold text-text hover:bg-surface-2 disabled:opacity-60"
           >
-            Somente esta parcela
+            Somente este mês
           </button>
           <button
             type="button"
             disabled={busy}
-            onClick={() => onChoose('all')}
+            onClick={() => onChoose(broadScope)}
             className={`rounded-[14px] px-4 py-3 text-[14px] font-bold disabled:opacity-60 ${
               deleting
                 ? 'border border-expense bg-expense-bg text-expense'
                 : 'bg-primary text-primary-fg'
             }`}
           >
-            {busy
-              ? 'Aguarde...'
-              : deleting
-                ? `Excluir todas as ${total} parcelas`
-                : `Aplicar às ${total} parcelas`}
+            {busy ? 'Aguarde...' : broadLabel}
           </button>
         </div>
 
         {!deleting && (
           <p className="mt-4 text-[12px] leading-relaxed text-text-3">
-            Valor e data continuam sendo os desta parcela. Categoria,
-            integrante, tipo e descrição valem para todas.
+            {fixed
+              ? 'Os meses anteriores mantêm o valor antigo, preservando o histórico do que já foi pago.'
+              : 'Valor e data continuam sendo os desta parcela. Categoria, integrante, tipo e descrição valem para todas.'}
           </p>
         )}
       </div>

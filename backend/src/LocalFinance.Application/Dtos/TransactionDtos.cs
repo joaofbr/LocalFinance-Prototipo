@@ -8,9 +8,10 @@ public record TransactionDto(
     string CategoryId,
     string MemberId,
     string Description,
-    string? InstallmentGroupId = null,
-    int? InstallmentNumber = null,
-    int? InstallmentTotal = null);
+    string? SeriesId = null,
+    string? SeriesKind = null,
+    int? SeriesIndex = null,
+    int? SeriesTotal = null);
 
 public record TransactionInput(
     string Type,
@@ -19,4 +20,5 @@ public record TransactionInput(
     string CategoryId,
     string MemberId,
     string Description,
-    int Installments = 1);
+    int Repeat = 1,
+    string RepeatMode = "installment");

@@ -27,7 +27,7 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         TransactionInput input,
         [FromQuery] string? scope,
         CancellationToken ct) =>
-        await service.UpdateAsync(id, input, IsGroupScope(scope), ct);
+        await service.UpdateAsync(id, input, scope, ct);
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(
@@ -35,10 +35,7 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         [FromQuery] string? scope,
         CancellationToken ct)
     {
-        await service.DeleteAsync(id, IsGroupScope(scope), ct);
+        await service.DeleteAsync(id, scope, ct);
         return NoContent();
     }
-
-    private static bool IsGroupScope(string? scope) =>
-        string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
 }

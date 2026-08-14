@@ -56,10 +56,10 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
             .ToList();
     }
 
-    public Task<List<Transaction>> ListByGroupAsync(Guid groupId, CancellationToken ct = default) =>
+    public Task<List<Transaction>> ListBySeriesAsync(Guid seriesId, CancellationToken ct = default) =>
         db.Transactions
-            .Where(t => t.InstallmentGroupId == groupId)
-            .OrderBy(t => t.InstallmentNumber)
+            .Where(t => t.SeriesId == seriesId)
+            .OrderBy(t => t.SeriesIndex)
             .ToListAsync(ct);
 
     public async Task AddAsync(Transaction transaction, CancellationToken ct = default) =>

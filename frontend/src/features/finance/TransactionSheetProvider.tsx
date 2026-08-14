@@ -2,7 +2,7 @@ import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
-import { InstallmentScopeDialog } from './components/InstallmentScopeDialog'
+import { SeriesScopeDialog } from './components/SeriesScopeDialog'
 import {
   useCategories,
   useCreateTransaction,
@@ -52,7 +52,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
         onSuccess: () => {
           close()
           showToast(
-            scope === 'all' ? 'Parcelas atualizadas' : 'Lançamento atualizado',
+            scope === 'one' ? 'Lançamento atualizado' : 'Série atualizada',
           )
         },
       },
@@ -86,7 +86,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
               })
               return
             }
-            if (editing.installmentGroupId) {
+            if (editing.seriesId) {
               setPendingEdit({ id: editing.id, input })
               return
             }
@@ -96,7 +96,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
       )}
 
       {pendingEdit && editing && (
-        <InstallmentScopeDialog
+        <SeriesScopeDialog
           transaction={editing}
           action="edit"
           busy={updateMutation.isPending}

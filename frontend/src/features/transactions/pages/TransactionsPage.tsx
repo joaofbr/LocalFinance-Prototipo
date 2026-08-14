@@ -11,7 +11,7 @@ import {
   type TransactionFilters,
 } from '@/features/finance/transactionFilters'
 import { TransactionListItem } from '@/features/finance/components/TransactionListItem'
-import { InstallmentScopeDialog } from '@/features/finance/components/InstallmentScopeDialog'
+import { SeriesScopeDialog } from '@/features/finance/components/SeriesScopeDialog'
 import type {
   Transaction,
   TransactionScope,
@@ -25,6 +25,12 @@ import {
   useMonthlyTransactions,
 } from '@/features/finance/hooks'
 import { getMonthlySummary } from '@/features/finance/selectors'
+
+const DELETE_MESSAGE: Record<TransactionScope, string> = {
+  one: 'Lançamento excluído',
+  future: 'Lançamentos futuros excluídos',
+  all: 'Série excluída',
+}
 
 export function TransactionsPage() {
   const { year, month } = usePeriod()
@@ -66,17 +72,14 @@ export function TransactionsPage() {
       {
         onSuccess: () => {
           setConfirmingDelete(null)
-          showToast(
-            scope === 'all' ? 'Parcelas excluídas' : 'Lançamento excluído',
-            'neutral',
-          )
+          showToast(DELETE_MESSAGE[scope], 'neutral')
         },
       },
     )
   }
 
   const handleDelete = (transaction: Transaction) => {
-    if (transaction.installmentGroupId) {
+    if (transaction.seriesId) {
       setConfirmingDelete(transaction)
       return
     }
@@ -148,7 +151,7 @@ export function TransactionsPage() {
       </div>
 
       {confirmingDelete && (
-        <InstallmentScopeDialog
+        <SeriesScopeDialog
           transaction={confirmingDelete}
           action="delete"
           busy={deleteMutation.isPending}

@@ -58,7 +58,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(t => t.Amount).HasPrecision(18, 2);
             entity.Property(t => t.Description).HasMaxLength(200);
             entity.HasIndex(t => t.Date);
-            entity.HasIndex(t => t.InstallmentGroupId);
+            entity.HasIndex(t => t.SeriesId);
+            entity.Property(t => t.SeriesKind).HasConversion<string>().HasMaxLength(12);
             entity.HasOne(t => t.Category)
                 .WithMany()
                 .HasForeignKey(t => t.CategoryId)

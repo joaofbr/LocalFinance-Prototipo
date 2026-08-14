@@ -28,9 +28,10 @@ export interface Transaction {
   categoryId: string
   memberId: string
   description: string
-  installmentGroupId?: string | null
-  installmentNumber?: number | null
-  installmentTotal?: number | null
+  seriesId?: string | null
+  seriesKind?: SeriesKind | null
+  seriesIndex?: number | null
+  seriesTotal?: number | null
 }
 
 export interface MonthlyTrendPoint {
@@ -40,7 +41,9 @@ export interface MonthlyTrendPoint {
   expense: number
 }
 
-export type TransactionScope = 'one' | 'all'
+export type SeriesKind = 'installment' | 'fixed'
+
+export type TransactionScope = 'one' | 'future' | 'all'
 
 export interface TransactionInput {
   type: TransactionType
@@ -49,7 +52,8 @@ export interface TransactionInput {
   categoryId: string
   memberId: string
   description: string
-  installments?: number
+  repeat?: number
+  repeatMode?: SeriesKind
 }
 
 export type MemberRole = 'Admin' | 'Member'

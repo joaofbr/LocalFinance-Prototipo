@@ -15,7 +15,8 @@ public class Transaction
     public User? User { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public Guid? InstallmentGroupId { get; set; }
-    public int? InstallmentNumber { get; set; }
-    public int? InstallmentTotal { get; set; }
+    public Guid? SeriesId { get; set; }
+    public SeriesKind? SeriesKind { get; set; }
+    public int? SeriesIndex { get; set; }
+    public int? SeriesTotal { get; set; }
 }

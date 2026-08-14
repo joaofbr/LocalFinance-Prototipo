@@ -2,6 +2,7 @@ using LocalFinance.Application.Common;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using LocalFinance.Domain.Entities;
+using LocalFinance.Domain.Enums;
 using LocalFinance.Domain.Repositories;
 
 namespace LocalFinance.Application.Services;
@@ -11,7 +12,7 @@ public class TransactionService(
     ICategoryRepository categories,
     IUserRepository users) : ITransactionService
 {
-    private const int MaxInstallments = 60;
+    private const int MaxRepeat = 60;
 
     public async Task<List<TransactionDto>> ListByMonthAsync(int year, int month, CancellationToken ct = default)
     {
@@ -22,11 +23,11 @@ public class TransactionService(
 
     public async Task<TransactionDto> CreateAsync(TransactionInput input, CancellationToken ct = default)
     {
-        var count = input.Installments;
-        if (count is < 1 or > MaxInstallments)
+        var count = input.Repeat;
+        if (count is < 1 or > MaxRepeat)
         {
             throw new ValidationException(
-                $"O número de parcelas deve estar entre 1 e {MaxInstallments}.");
+                $"A repetição deve estar entre 1 e {MaxRepeat} meses.");
         }
 
         var first = new Transaction();
@@ -39,25 +40,35 @@ public class TransactionService(
             return ToDto(first);
         }
 
-        var total = first.Amount;
-        var each = decimal.Round(total / count, 2);
-        var groupId = Guid.NewGuid();
+        var kind = EnumMapping.ParseSeriesKind(input.RepeatMode);
+        if (kind == SeriesKind.Installment && first.Type == TransactionType.Income)
+        {
+            throw new ValidationException("Receitas não podem ser parceladas.");
+        }
 
+        var seriesId = Guid.NewGuid();
         var batch = new List<Transaction>(count);
+
+        var total = first.Amount;
+        var each = kind == SeriesKind.Installment
+            ? decimal.Round(total / count, 2)
+            : total;
+
         for (var i = 0; i < count; i++)
         {
-            var isLast = i == count - 1;
+            var isLastInstallment = kind == SeriesKind.Installment && i == count - 1;
             batch.Add(new Transaction
             {
                 Type = first.Type,
-                Amount = isLast ? total - (each * (count - 1)) : each,
+                Amount = isLastInstallment ? total - (each * (count - 1)) : each,
                 Date = first.Date.AddMonths(i),
                 CategoryId = first.CategoryId,
                 UserId = first.UserId,
                 Description = first.Description,
-                InstallmentGroupId = groupId,
-                InstallmentNumber = i + 1,
-                InstallmentTotal = count,
+                SeriesId = seriesId,
+                SeriesKind = kind,
+                SeriesIndex = i + 1,
+                SeriesTotal = count,
             });
         }
 
@@ -67,20 +78,25 @@ public class TransactionService(
     }
 
     public async Task<TransactionDto> UpdateAsync(
-        Guid id, TransactionInput input, bool applyToGroup = false, CancellationToken ct = default)
+        Guid id, TransactionInput input, string? scope = null, CancellationToken ct = default)
     {
         var transaction = await GetOrThrowAsync(id, ct);
-        await ApplyAsync(transaction, input, ct);
+        var reached = await ResolveScopeAsync(transaction, scope, ct);
 
-        if (applyToGroup && transaction.InstallmentGroupId is Guid groupId)
+        var previousAmount = transaction.Amount;
+        await ApplyAsync(transaction, input, ct);
+        var amountChanged = previousAmount != transaction.Amount;
+
+        foreach (var sibling in reached.Where(s => s.Id != transaction.Id))
         {
-            var siblings = await transactions.ListByGroupAsync(groupId, ct);
-            foreach (var sibling in siblings.Where(s => s.Id != transaction.Id))
+            sibling.Type = transaction.Type;
+            sibling.CategoryId = transaction.CategoryId;
+            sibling.UserId = transaction.UserId;
+            sibling.Description = transaction.Description;
+
+            if (amountChanged && sibling.SeriesKind == SeriesKind.Fixed)
             {
-                sibling.Type = transaction.Type;
-                sibling.CategoryId = transaction.CategoryId;
-                sibling.UserId = transaction.UserId;
-                sibling.Description = transaction.Description;
+                sibling.Amount = transaction.Amount;
             }
         }
 
@@ -88,14 +104,14 @@ public class TransactionService(
         return ToDto(transaction);
     }
 
-    public async Task DeleteAsync(Guid id, bool applyToGroup = false, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid id, string? scope = null, CancellationToken ct = default)
     {
         var transaction = await GetOrThrowAsync(id, ct);
+        var reached = await ResolveScopeAsync(transaction, scope, ct);
 
-        if (applyToGroup && transaction.InstallmentGroupId is Guid groupId)
+        if (reached.Count > 0)
         {
-            var siblings = await transactions.ListByGroupAsync(groupId, ct);
-            transactions.RemoveRange(siblings);
+            transactions.RemoveRange(reached);
         }
         else
         {
@@ -103,6 +119,26 @@ public class TransactionService(
         }
 
         await transactions.SaveChangesAsync(ct);
+    }
+
+    private async Task<List<Transaction>> ResolveScopeAsync(
+        Transaction transaction, string? scope, CancellationToken ct)
+    {
+        if (transaction.SeriesId is not Guid seriesId || string.IsNullOrWhiteSpace(scope))
+        {
+            return [];
+        }
+
+        var series = await transactions.ListBySeriesAsync(seriesId, ct);
+
+        return scope.ToLowerInvariant() switch
+        {
+            "all" => series,
+            "future" => series
+                .Where(s => s.SeriesIndex >= transaction.SeriesIndex)
+                .ToList(),
+            _ => [],
+        };
     }
 
     private async Task<Transaction> GetOrThrowAsync(Guid id, CancellationToken ct) =>
@@ -150,7 +186,8 @@ public class TransactionService(
         transaction.CategoryId.ToString(),
         transaction.UserId.ToString(),
         transaction.Description,
-        transaction.InstallmentGroupId?.ToString(),
-        transaction.InstallmentNumber,
-        transaction.InstallmentTotal);
+        transaction.SeriesId?.ToString(),
+        transaction.SeriesKind?.ToDto(),
+        transaction.SeriesIndex,
+        transaction.SeriesTotal);
 }

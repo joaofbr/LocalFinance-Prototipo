@@ -5,6 +5,7 @@ import { AmountInput } from './AmountInput'
 import type {
   Category,
   Member,
+  SeriesKind,
   Transaction,
   TransactionInput,
   TransactionType,
@@ -21,8 +22,8 @@ interface TransactionFormSheetProps {
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-const INSTALLMENT_OPTIONS = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 24, 36, 48, 60,
+const REPEAT_OPTIONS = [
+  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 24, 36, 48, 60,
 ]
 
 export function TransactionFormSheet({
@@ -43,7 +44,8 @@ export function TransactionFormSheet({
     editing?.memberId ?? members[0]?.id ?? '',
   )
   const [description, setDescription] = useState(editing?.description ?? '')
-  const [installments, setInstallments] = useState(1)
+  const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>('none')
+  const [repeat, setRepeat] = useState(12)
   const [errors, setErrors] = useState<{ amount?: string; category?: string }>(
     {},
   )
@@ -52,13 +54,16 @@ export function TransactionFormSheet({
     (c) => c.active && (c.kind === type || c.kind === 'both'),
   )
 
-  const canSplit = !editing && type === 'expense'
-  const splitting = canSplit && installments > 1
+  const canRepeat = !editing
+  const repeating = canRepeat && repeatMode !== 'none'
+  const splitting = repeating && repeatMode === 'installment'
 
   const changeType = (next: TransactionType) => {
     setType(next)
     setCategoryId('')
-    setInstallments(1)
+    if (next === 'income' && repeatMode === 'installment') {
+      setRepeatMode('none')
+    }
     setErrors((e) => ({ ...e, category: undefined }))
   }
 
@@ -78,7 +83,8 @@ export function TransactionFormSheet({
       categoryId,
       memberId,
       description: description.trim() || category?.name || 'Lançamento',
-      installments: splitting ? installments : 1,
+      repeat: repeating ? repeat : 1,
+      repeatMode: repeating ? repeatMode : undefined,
     })
   }
 
@@ -134,9 +140,11 @@ export function TransactionFormSheet({
               {errors.amount}
             </div>
           )}
-          {splitting && cents > 0 && (
+          {repeating && cents > 0 && (
             <div className="mt-1.5 text-center text-[12.5px] font-semibold text-text-2">
-              {installments}x de R$ {formatCents(Math.round(cents / installments))}
+              {splitting
+                ? `${repeat}x de R$ ${formatCents(Math.round(cents / repeat))}`
+                : `R$ ${formatCents(cents)} por mês, durante ${repeat} meses`}
             </div>
           )}
 
@@ -203,29 +211,60 @@ export function TransactionFormSheet({
                 ))}
               </select>
             </div>
-            {canSplit && (
+            {canRepeat && (
               <div className="flex-1">
                 <label
-                  htmlFor="installments"
+                  htmlFor="repeatMode"
                   className="mb-1.5 block text-[13px] font-semibold text-text-2"
                 >
-                  Parcelas
+                  Repetição
                 </label>
                 <select
-                  id="installments"
-                  value={installments}
-                  onChange={(e) => setInstallments(Number(e.target.value))}
+                  id="repeatMode"
+                  value={repeatMode}
+                  onChange={(e) =>
+                    setRepeatMode(e.target.value as SeriesKind | 'none')
+                  }
                   className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
                 >
-                  {INSTALLMENT_OPTIONS.map((count) => (
-                    <option key={count} value={count}>
-                      {count === 1 ? 'À vista' : `${count}x`}
-                    </option>
-                  ))}
+                  <option value="none">Não repete</option>
+                  <option value="fixed">Fixo mensal</option>
+                  {type === 'expense' && (
+                    <option value="installment">Parcelado</option>
+                  )}
                 </select>
               </div>
             )}
           </div>
+
+          {repeating && (
+            <div className="mt-3">
+              <label
+                htmlFor="repeat"
+                className="mb-1.5 block text-[13px] font-semibold text-text-2"
+              >
+                {splitting ? 'Número de parcelas' : 'Por quantos meses'}
+              </label>
+              <select
+                id="repeat"
+                value={repeat}
+                onChange={(e) => setRepeat(Number(e.target.value))}
+                className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+              >
+                {REPEAT_OPTIONS.map((count) => (
+                  <option key={count} value={count}>
+                    {splitting ? `${count}x` : `${count} meses`}
+                  </option>
+                ))}
+              </select>
+              {!splitting && (
+                <p className="mt-1.5 text-[12px] leading-relaxed text-text-3">
+                  Cria um lançamento por mês com o mesmo valor. Quando acabar,
+                  basta cadastrar de novo.
+                </p>
+              )}
+            </div>
+          )}
 
           <label className="mb-1.5 mt-4 block text-[13px] font-semibold text-text-2">
             Descrição

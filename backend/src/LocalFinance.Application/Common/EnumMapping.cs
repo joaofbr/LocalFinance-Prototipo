@@ -29,6 +29,16 @@ public static class EnumMapping
         _ => throw new ValidationException("Tipo de categoria inválido."),
     };
 
+    public static string ToDto(this SeriesKind kind) =>
+        kind == SeriesKind.Installment ? "installment" : "fixed";
+
+    public static SeriesKind ParseSeriesKind(string value) => value switch
+    {
+        "installment" => SeriesKind.Installment,
+        "fixed" => SeriesKind.Fixed,
+        _ => throw new ValidationException("Tipo de repetição inválido."),
+    };
+
     public static string ToDto(this UserRole role) =>
         role == UserRole.Admin ? "Admin" : "Member";
 
