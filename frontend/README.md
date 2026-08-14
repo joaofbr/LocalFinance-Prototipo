@@ -25,6 +25,20 @@ npm run lint      # eslint
 npm run preview   # serve o build de produção
 ```
 
+### Ao mexer nas dependências
+
+O build da Cloudflare roda `npm ci` com **npm 10.9.2**, e um `package-lock.json`
+gerado pelo npm 11 é rejeitado por essa versão. Depois de adicionar ou atualizar
+qualquer pacote, regere o lock com a mesma versão do build:
+
+```bash
+npx npm@10.9.2 install --package-lock-only
+```
+
+Sem isso o deploy falha com `npm ci can only install packages when your
+package.json and package-lock.json are in sync`, listando pacotes que existem
+localmente mas não no lock.
+
 ## Configuração
 
 Copie `.env.example` para `.env` e ajuste:
