@@ -43,11 +43,22 @@ builder.Services.AddSingleton(
     builder.Configuration.GetSection(InviteOptions.SectionName).Get<InviteOptions>()
         ?? new InviteOptions());
 
+builder.Services.Configure<BrevoOptions>(
+    builder.Configuration.GetSection(BrevoOptions.SectionName));
+var brevo = builder.Configuration.GetSection(BrevoOptions.SectionName).Get<BrevoOptions>()
+    ?? new BrevoOptions();
+
 builder.Services.Configure<SmtpOptions>(
     builder.Configuration.GetSection(SmtpOptions.SectionName));
 var smtp = builder.Configuration.GetSection(SmtpOptions.SectionName).Get<SmtpOptions>()
     ?? new SmtpOptions();
-if (smtp.IsConfigured)
+
+if (brevo.IsConfigured)
+{
+    builder.Services.AddHttpClient<IEmailSender, BrevoEmailSender>(client =>
+        client.Timeout = TimeSpan.FromSeconds(20));
+}
+else if (smtp.IsConfigured)
 {
     builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 }
@@ -57,8 +68,10 @@ else if (builder.Environment.IsProduction())
         ? "Smtp:User está definido mas Smtp:Password está vazio, então o servidor "
           + "recusaria a autenticação. Defina a senha com 'dotnet user-secrets set "
           + "\"Smtp:Password\" \"<senha>\"' ou na variável Smtp__Password."
-        : "SMTP não configurado. Defina Smtp:Host e Smtp:FromEmail. Em produção os "
-          + "convites não podem cair no log.");
+        : "Nenhum provedor de e-mail configurado. Defina Brevo:ApiKey e Brevo:FromEmail "
+          + "(recomendado em produção, porque hospedagens gratuitas costumam bloquear as "
+          + "portas de SMTP) ou Smtp:Host e Smtp:FromEmail. Em produção os convites não "
+          + "podem cair no log.");
 }
 else
 {

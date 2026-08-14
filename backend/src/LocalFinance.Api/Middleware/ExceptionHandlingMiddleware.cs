@@ -44,6 +44,7 @@ public class ExceptionHandlingMiddleware(
         401 => "Unauthorized",
         404 => "Not Found",
         409 => "Conflict",
+        502 => "Bad Gateway",
         _ => "Internal Server Error",
     };
 }

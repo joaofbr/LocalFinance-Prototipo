@@ -26,7 +26,7 @@ public class SmtpEmailSender(
             TextBody = message.TextBody,
         }.ToMessageBody();
 
-        using var client = new SmtpClient();
+        using var client = new SmtpClient { Timeout = 20000 };
         await client.ConnectAsync(
             opts.Host,
             opts.Port,
