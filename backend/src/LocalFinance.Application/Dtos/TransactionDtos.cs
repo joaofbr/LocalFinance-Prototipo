@@ -11,14 +11,15 @@ public record TransactionDto(
     string? SeriesId = null,
     string? SeriesKind = null,
     int? SeriesIndex = null,
-    int? SeriesTotal = null);
+    int? SeriesTotal = null,
+    int? SplitTotal = null);
 
 public record TransactionInput(
     string Type,
     decimal Amount,
     DateOnly Date,
     string CategoryId,
-    string MemberId,
+    List<string> MemberIds,
     string Description,
     int Repeat = 1,
     string RepeatMode = "installment");

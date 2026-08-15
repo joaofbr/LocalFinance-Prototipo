@@ -23,53 +23,57 @@ public class TransactionService(
 
     public async Task<TransactionDto> CreateAsync(TransactionInput input, CancellationToken ct = default)
     {
-        var count = input.Repeat;
-        if (count is < 1 or > MaxRepeat)
+        var months = input.Repeat;
+        if (months is < 1 or > MaxRepeat)
         {
             throw new ValidationException(
                 $"A repetição deve estar entre 1 e {MaxRepeat} meses.");
         }
 
-        var first = new Transaction();
-        await ApplyAsync(first, input, ct);
+        var participants = await ResolveParticipantsAsync(input.MemberIds, ct);
+        var template = new Transaction();
+        await ApplyAsync(template, input, ct);
 
-        if (count == 1)
-        {
-            await transactions.AddAsync(first, ct);
-            await transactions.SaveChangesAsync(ct);
-            return ToDto(first);
-        }
-
-        var kind = EnumMapping.ParseSeriesKind(input.RepeatMode);
-        if (kind == SeriesKind.Installment && first.Type == TransactionType.Income)
+        var kind = months > 1 ? EnumMapping.ParseSeriesKind(input.RepeatMode) : (SeriesKind?)null;
+        if (kind == SeriesKind.Installment && template.Type == TransactionType.Income)
         {
             throw new ValidationException("Receitas não podem ser parceladas.");
         }
 
-        var seriesId = Guid.NewGuid();
-        var batch = new List<Transaction>(count);
-
-        var total = first.Amount;
-        var each = kind == SeriesKind.Installment
-            ? decimal.Round(total / count, 2)
-            : total;
-
-        for (var i = 0; i < count; i++)
+        if (months == 1 && participants.Count == 1)
         {
-            var isLastInstallment = kind == SeriesKind.Installment && i == count - 1;
-            batch.Add(new Transaction
+            template.UserId = participants[0];
+            await transactions.AddAsync(template, ct);
+            await transactions.SaveChangesAsync(ct);
+            return ToDto(template);
+        }
+
+        var seriesId = Guid.NewGuid();
+        var batch = new List<Transaction>(months * participants.Count);
+
+        for (var m = 0; m < months; m++)
+        {
+            var monthAmount = kind == SeriesKind.Installment
+                ? SliceOf(template.Amount, months, m)
+                : template.Amount;
+
+            for (var p = 0; p < participants.Count; p++)
             {
-                Type = first.Type,
-                Amount = isLastInstallment ? total - (each * (count - 1)) : each,
-                Date = first.Date.AddMonths(i),
-                CategoryId = first.CategoryId,
-                UserId = first.UserId,
-                Description = first.Description,
-                SeriesId = seriesId,
-                SeriesKind = kind,
-                SeriesIndex = i + 1,
-                SeriesTotal = count,
-            });
+                batch.Add(new Transaction
+                {
+                    Type = template.Type,
+                    Amount = SliceOf(monthAmount, participants.Count, p),
+                    Date = template.Date.AddMonths(m),
+                    CategoryId = template.CategoryId,
+                    UserId = participants[p],
+                    Description = template.Description,
+                    SeriesId = seriesId,
+                    SeriesKind = kind,
+                    SeriesIndex = m + 1,
+                    SeriesTotal = months,
+                    SplitTotal = participants.Count > 1 ? participants.Count : null,
+                });
+            }
         }
 
         await transactions.AddRangeAsync(batch, ct);
@@ -87,11 +91,16 @@ public class TransactionService(
         await ApplyAsync(transaction, input, ct);
         var amountChanged = previousAmount != transaction.Amount;
 
+        if (transaction.SplitTotal is null)
+        {
+            var participants = await ResolveParticipantsAsync(input.MemberIds, ct);
+            transaction.UserId = participants[0];
+        }
+
         foreach (var sibling in reached.Where(s => s.Id != transaction.Id))
         {
             sibling.Type = transaction.Type;
             sibling.CategoryId = transaction.CategoryId;
-            sibling.UserId = transaction.UserId;
             sibling.Description = transaction.Description;
 
             if (amountChanged && sibling.SeriesKind == SeriesKind.Fixed)
@@ -124,21 +133,49 @@ public class TransactionService(
     private async Task<List<Transaction>> ResolveScopeAsync(
         Transaction transaction, string? scope, CancellationToken ct)
     {
-        if (transaction.SeriesId is not Guid seriesId || string.IsNullOrWhiteSpace(scope))
+        if (transaction.SeriesId is not Guid seriesId)
         {
             return [];
         }
 
         var series = await transactions.ListBySeriesAsync(seriesId, ct);
 
-        return scope.ToLowerInvariant() switch
+        return (scope ?? "one").ToLowerInvariant() switch
         {
             "all" => series,
-            "future" => series
-                .Where(s => s.SeriesIndex >= transaction.SeriesIndex)
-                .ToList(),
-            _ => [],
+            "future" => series.Where(s => s.SeriesIndex >= transaction.SeriesIndex).ToList(),
+            _ => series.Where(s => s.SeriesIndex == transaction.SeriesIndex).ToList(),
         };
+    }
+
+    private async Task<List<Guid>> ResolveParticipantsAsync(
+        List<string> memberIds, CancellationToken ct)
+    {
+        if (memberIds is null || memberIds.Count == 0)
+        {
+            throw new ValidationException("Selecione ao menos um integrante.");
+        }
+
+        var resolved = new List<Guid>();
+        foreach (var raw in memberIds.Distinct())
+        {
+            if (!Guid.TryParse(raw, out var id) || await users.GetByIdAsync(id, ct) is null)
+            {
+                throw new ValidationException("Integrante não encontrado.");
+            }
+            resolved.Add(id);
+        }
+        return resolved;
+    }
+
+    private static decimal SliceOf(decimal total, int parts, int index)
+    {
+        if (parts == 1)
+        {
+            return total;
+        }
+        var each = decimal.Round(total / parts, 2);
+        return index == parts - 1 ? total - (each * (parts - 1)) : each;
     }
 
     private async Task<Transaction> GetOrThrowAsync(Guid id, CancellationToken ct) =>
@@ -156,17 +193,11 @@ public class TransactionService(
         {
             throw new ValidationException("Categoria não encontrada.");
         }
-        if (!Guid.TryParse(input.MemberId, out var userId)
-            || await users.GetByIdAsync(userId, ct) is null)
-        {
-            throw new ValidationException("Integrante não encontrado.");
-        }
 
         transaction.Type = EnumMapping.ParseTransactionType(input.Type);
         transaction.Amount = decimal.Round(input.Amount, 2);
         transaction.Date = input.Date;
         transaction.CategoryId = categoryId;
-        transaction.UserId = userId;
         transaction.Description = input.Description.Trim();
     }
 
@@ -189,5 +220,6 @@ public class TransactionService(
         transaction.SeriesId?.ToString(),
         transaction.SeriesKind?.ToDto(),
         transaction.SeriesIndex,
-        transaction.SeriesTotal);
+        transaction.SeriesTotal,
+        transaction.SplitTotal);
 }

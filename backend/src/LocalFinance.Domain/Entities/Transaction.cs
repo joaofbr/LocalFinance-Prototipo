@@ -19,4 +19,5 @@ public class Transaction
     public SeriesKind? SeriesKind { get; set; }
     public int? SeriesIndex { get; set; }
     public int? SeriesTotal { get; set; }
+    public int? SplitTotal { get; set; }
 }

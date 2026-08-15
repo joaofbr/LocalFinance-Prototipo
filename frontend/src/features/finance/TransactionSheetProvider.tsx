@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
+import { useAuth } from '@/features/auth/useAuth'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
 import { SeriesScopeDialog } from './components/SeriesScopeDialog'
 import {
@@ -28,6 +29,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
     input: TransactionInput
   } | null>(null)
   const { showToast } = useToast()
+  const { user } = useAuth()
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
   const createMutation = useCreateTransaction()
@@ -74,6 +76,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
           editing={editing}
           categories={categoriesQuery.data ?? []}
           members={membersQuery.data ?? []}
+          currentUserId={user?.id ?? ''}
           saving={saving}
           onClose={close}
           onSubmit={(input) => {
@@ -86,7 +89,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
               })
               return
             }
-            if (editing.seriesId) {
+            if ((editing.seriesTotal ?? 1) > 1) {
               setPendingEdit({ id: editing.id, input })
               return
             }

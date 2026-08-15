@@ -15,6 +15,7 @@ interface TransactionFormSheetProps {
   editing: Transaction | null
   categories: Category[]
   members: Member[]
+  currentUserId: string
   saving: boolean
   onClose: () => void
   onSubmit: (input: TransactionInput) => void
@@ -30,6 +31,7 @@ export function TransactionFormSheet({
   editing,
   categories,
   members,
+  currentUserId,
   saving,
   onClose,
   onSubmit,
@@ -40,19 +42,37 @@ export function TransactionFormSheet({
   )
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '')
   const [date, setDate] = useState(editing?.date ?? TODAY)
-  const [memberId, setMemberId] = useState(
-    editing?.memberId ?? members[0]?.id ?? '',
+  const [memberIds, setMemberIds] = useState<string[]>(() =>
+    editing ? [editing.memberId] : currentUserId ? [currentUserId] : [],
   )
   const [description, setDescription] = useState(editing?.description ?? '')
   const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>('none')
   const [repeat, setRepeat] = useState(12)
-  const [errors, setErrors] = useState<{ amount?: string; category?: string }>(
-    {},
-  )
+  const [errors, setErrors] = useState<{
+    amount?: string
+    category?: string
+    members?: string
+  }>({})
 
   const availableCategories = categories.filter(
     (c) => c.active && (c.kind === type || c.kind === 'both'),
   )
+
+  const activeMembers = members.filter((m) => m.active || memberIds.includes(m.id))
+  const sharing = !editing && memberIds.length > 1
+
+  const toggleMember = (id: string) => {
+    setErrors((e) => ({ ...e, members: undefined }))
+    if (editing) {
+      setMemberIds([id])
+      return
+    }
+    setMemberIds((current) =>
+      current.includes(id)
+        ? current.filter((m) => m !== id)
+        : [...current, id],
+    )
+  }
 
   const canRepeat = !editing
   const repeating = canRepeat && repeatMode !== 'none'
@@ -71,7 +91,10 @@ export function TransactionFormSheet({
     const nextErrors: typeof errors = {}
     if (cents <= 0) nextErrors.amount = 'Informe um valor maior que zero.'
     if (!categoryId) nextErrors.category = 'Selecione uma categoria.'
-    if (nextErrors.amount || nextErrors.category) {
+    if (memberIds.length === 0) {
+      nextErrors.members = 'Selecione ao menos um integrante.'
+    }
+    if (nextErrors.amount || nextErrors.category || nextErrors.members) {
       setErrors(nextErrors)
       return
     }
@@ -81,7 +104,7 @@ export function TransactionFormSheet({
       amount: cents / 100,
       date,
       categoryId,
-      memberId,
+      memberIds,
       description: description.trim() || category?.name || 'Lançamento',
       repeat: repeating ? repeat : 1,
       repeatMode: repeating ? repeatMode : undefined,
@@ -140,12 +163,53 @@ export function TransactionFormSheet({
               {errors.amount}
             </div>
           )}
-          {repeating && cents > 0 && (
+          {cents > 0 && (repeating || sharing) && (
             <div className="mt-1.5 text-center text-[12.5px] font-semibold text-text-2">
               {splitting
-                ? `${repeat}x de R$ ${formatCents(Math.round(cents / repeat))}`
-                : `R$ ${formatCents(cents)} por mês, durante ${repeat} meses`}
+                ? `${repeat}x de R$ ${formatCents(Math.round(cents / repeat / memberIds.length))}`
+                : repeating
+                  ? `R$ ${formatCents(Math.round(cents / memberIds.length))} por mês, durante ${repeat} meses`
+                  : `R$ ${formatCents(Math.round(cents / memberIds.length))} para cada`}
+              {sharing && splitting && ' para cada'}
             </div>
+          )}
+
+          <label className="mb-2 mt-4 block text-[13px] font-semibold text-text-2">
+            {editing ? 'Integrante' : 'De quem é'}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {activeMembers.map((member) => {
+              const selected = memberIds.includes(member.id)
+              return (
+                <button
+                  key={member.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => toggleMember(member.id)}
+                  className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[13px] font-semibold"
+                  style={{
+                    borderColor: selected ? member.color : 'var(--border-strong)',
+                    background: selected
+                      ? hexToRgba(member.color, 0.14)
+                      : 'transparent',
+                    color: selected ? member.color : 'var(--text2)',
+                  }}
+                >
+                  {member.id === currentUserId ? 'Eu' : member.name}
+                </button>
+              )
+            })}
+          </div>
+          {errors.members && (
+            <div className="mt-2 text-[12.5px] font-semibold text-expense">
+              {errors.members}
+            </div>
+          )}
+          {sharing && (
+            <p className="mt-2 text-[12px] leading-relaxed text-text-3">
+              O valor será dividido igualmente entre os {memberIds.length}{' '}
+              selecionados.
+            </p>
           )}
 
           <label className="mb-2 mt-4 block text-[13px] font-semibold text-text-2">
@@ -194,22 +258,6 @@ export function TransactionFormSheet({
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
               />
-            </div>
-            <div className="flex-1" hidden>
-              <label className="mb-1.5 block text-[13px] font-semibold text-text-2">
-                Integrante
-              </label>
-              <select
-                value={memberId}
-                onChange={(e) => setMemberId(e.target.value)}
-                className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
-              >
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
             </div>
             {canRepeat && (
               <div className="flex-1">

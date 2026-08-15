@@ -18,6 +18,7 @@ export function SeriesScopeDialog({
 }: SeriesScopeDialogProps) {
   const deleting = action === 'delete'
   const fixed = transaction.seriesKind === 'fixed'
+  const shared = (transaction.splitTotal ?? 0) > 1
   const index = transaction.seriesIndex ?? 1
   const total = transaction.seriesTotal ?? 1
   const remaining = total - index + 1
@@ -66,8 +67,15 @@ export function SeriesScopeDialog({
           {fixed
             ? `o mês ${index} de ${total} de um lançamento fixo`
             : `a parcela ${index} de ${total}`}
+          {shared ? `, dividido entre ${transaction.splitTotal} integrantes` : ''}
           . {deleting ? 'O que você quer excluir?' : 'A que a alteração vale?'}
         </p>
+        {shared && (
+          <p className="mb-5 -mt-3 text-[12px] leading-relaxed text-text-3">
+            Vale para todos os participantes: não dá para remover a parte de um
+            só e deixar a do outro.
+          </p>
+        )}
 
         <div className="flex flex-col gap-2.5">
           <button

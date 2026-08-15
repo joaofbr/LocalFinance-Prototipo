@@ -79,7 +79,7 @@ export function TransactionsPage() {
   }
 
   const handleDelete = (transaction: Transaction) => {
-    if (transaction.seriesId) {
+    if ((transaction.seriesTotal ?? 1) > 1) {
       setConfirmingDelete(transaction)
       return
     }

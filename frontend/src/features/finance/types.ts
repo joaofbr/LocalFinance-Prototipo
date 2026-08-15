@@ -32,6 +32,7 @@ export interface Transaction {
   seriesKind?: SeriesKind | null
   seriesIndex?: number | null
   seriesTotal?: number | null
+  splitTotal?: number | null
 }
 
 export interface MonthlyTrendPoint {
@@ -50,7 +51,7 @@ export interface TransactionInput {
   amount: number
   date: string
   categoryId: string
-  memberId: string
+  memberIds: string[]
   description: string
   repeat?: number
   repeatMode?: SeriesKind
