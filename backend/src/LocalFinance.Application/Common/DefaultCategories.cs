@@ -7,17 +7,17 @@ public static class DefaultCategories
 {
     private static readonly (string Name, CategoryKind Kind, string Color, string Icon)[] Templates =
     [
-        ("Mercado", CategoryKind.Expense, "#f59e0b", "cart"),
-        ("Moradia", CategoryKind.Expense, "#6366f1", "home"),
-        ("Transporte", CategoryKind.Expense, "#0ea5e9", "car"),
-        ("Alimentação", CategoryKind.Expense, "#f97316", "utensils"),
-        ("Saúde", CategoryKind.Expense, "#f43f5e", "heart"),
-        ("Educação", CategoryKind.Expense, "#8b5cf6", "cap"),
-        ("Lazer", CategoryKind.Expense, "#ec4899", "film"),
-        ("Contas & Serviços", CategoryKind.Expense, "#14b8a6", "zap"),
-        ("Salário", CategoryKind.Income, "#059669", "wallet"),
-        ("Renda extra", CategoryKind.Income, "#22c55e", "laptop"),
-        ("Investimentos", CategoryKind.Both, "#84cc16", "trendingUp"),
+        ("Mercado", CategoryKind.Expense, "#d95926", "cart"),
+        ("Moradia", CategoryKind.Expense, "#3987e5", "home"),
+        ("Transporte", CategoryKind.Expense, "#199e70", "car"),
+        ("Alimentação", CategoryKind.Expense, "#c98500", "utensils"),
+        ("Saúde", CategoryKind.Expense, "#e66767", "heart"),
+        ("Educação", CategoryKind.Expense, "#9085e9", "cap"),
+        ("Lazer", CategoryKind.Expense, "#d55181", "film"),
+        ("Contas & Serviços", CategoryKind.Expense, "#008300", "zap"),
+        ("Salário", CategoryKind.Income, "#008300", "wallet"),
+        ("Renda extra", CategoryKind.Income, "#199e70", "laptop"),
+        ("Investimentos", CategoryKind.Both, "#3987e5", "trendingUp"),
     ];
 
     public static List<Category> For(Guid householdId) =>

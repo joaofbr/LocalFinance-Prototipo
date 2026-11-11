@@ -5,6 +5,7 @@ namespace LocalFinance.Domain.Repositories;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<User?> GetWithHouseholdAsync(Guid id, CancellationToken ct = default);
     Task<User?> GetInHouseholdAsync(Guid householdId, Guid id, CancellationToken ct = default);
     Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
     Task<List<User>> ListAsync(Guid householdId, CancellationToken ct = default);

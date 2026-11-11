@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Household>(entity =>
         {
             entity.Property(h => h.Plan).HasConversion<string>().HasMaxLength(12);
+            entity.Property(h => h.Status).HasConversion<string>().HasMaxLength(12);
         });
 
         modelBuilder.Entity<User>(entity =>

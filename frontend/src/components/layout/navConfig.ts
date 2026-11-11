@@ -6,6 +6,7 @@ interface NavItem {
   label: string
   icon: IconName
   adminOnly?: boolean
+  developerOnly?: boolean
   plan?: HouseholdPlan
 }
 
@@ -14,6 +15,15 @@ const MEMBERS_ITEM: NavItem = {
   label: 'Integrantes',
   icon: 'users',
   plan: 'family',
+}
+
+export const CONSOLE_PATH = '/console'
+
+const CONSOLE_ITEM: NavItem = {
+  to: CONSOLE_PATH,
+  label: 'Console',
+  icon: 'shield',
+  developerOnly: true,
 }
 
 const FAMILY_MODE_ITEM: NavItem = {
@@ -32,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   MEMBERS_ITEM,
   FAMILY_MODE_ITEM,
   { to: '/profile', label: 'Perfil', icon: 'user' },
+  CONSOLE_ITEM,
 ]
 
 export const MORE_NAV_ITEMS: NavItem[] = [
@@ -39,6 +50,7 @@ export const MORE_NAV_ITEMS: NavItem[] = [
   MEMBERS_ITEM,
   FAMILY_MODE_ITEM,
   { to: '/profile', label: 'Perfil', icon: 'user' },
+  CONSOLE_ITEM,
 ]
 
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
@@ -50,11 +62,17 @@ export const BOTTOM_NAV_ITEMS: NavItem[] = [
 
 export function visibleNavItems(
   items: NavItem[],
-  { isAdmin, plan }: { isAdmin: boolean; plan: HouseholdPlan | undefined },
+  {
+    isAdmin,
+    isDeveloper,
+    plan,
+  }: { isAdmin: boolean; isDeveloper: boolean; plan: HouseholdPlan | undefined },
 ): NavItem[] {
   return items.filter(
     (item) =>
-      (!item.adminOnly || isAdmin) && (!item.plan || item.plan === plan),
+      (!item.adminOnly || isAdmin) &&
+      (!item.developerOnly || isDeveloper) &&
+      (!item.plan || item.plan === plan),
   )
 }
 
@@ -65,6 +83,7 @@ const TITLES: Record<string, string> = {
   '/categories': 'Categorias',
   '/members': 'Integrantes',
   '/modo-familia': 'Modo família',
+  '/console': 'Console',
   '/profile': 'Perfil',
   '/mais': 'Mais',
 }

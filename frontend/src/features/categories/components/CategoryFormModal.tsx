@@ -9,18 +9,14 @@ import type {
 } from '@/features/finance/types'
 
 const COLOR_OPTIONS = [
-  '#059669',
-  '#22c55e',
-  '#84cc16',
-  '#f59e0b',
-  '#f97316',
-  '#ef4444',
-  '#f43f5e',
-  '#ec4899',
-  '#8b5cf6',
-  '#6366f1',
-  '#0ea5e9',
-  '#14b8a6',
+  '#3987e5',
+  '#d95926',
+  '#199e70',
+  '#c98500',
+  '#d55181',
+  '#008300',
+  '#9085e9',
+  '#e66767',
 ]
 
 const ICON_OPTIONS: IconName[] = [
@@ -59,7 +55,7 @@ export function CategoryFormModal({
 }: CategoryFormModalProps) {
   const [name, setName] = useState(editing?.name ?? '')
   const [kind, setKind] = useState<CategoryKind>(editing?.kind ?? 'expense')
-  const [color, setColor] = useState(editing?.color ?? COLOR_OPTIONS[3])
+  const [color, setColor] = useState(editing?.color ?? COLOR_OPTIONS[0])
   const [icon, setIcon] = useState<IconName>(editing?.icon ?? 'cart')
   const [nameError, setNameError] = useState<string | null>(null)
 

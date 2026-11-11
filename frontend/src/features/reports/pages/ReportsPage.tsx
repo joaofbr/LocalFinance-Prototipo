@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Avatar } from '@/components/ui/Avatar'
+import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { formatMoney, formatMonthShort, formatSignedMoney } from '@/lib/format'
+import { formatMoney, formatMonthShort, formatPeriodLabel } from '@/lib/format'
 import { MonthSelector } from '@/features/finance/components/MonthSelector'
+import { MonthSummaryCards } from '@/features/finance/components/MonthSummaryCards'
 import { usePeriod } from '@/features/finance/PeriodContext'
 import {
   useCategories,
@@ -40,6 +42,8 @@ export function ReportsPage() {
     categoriesQuery.isLoading ||
     membersQuery.isLoading ||
     trendQuery.isLoading
+  const isError =
+    transactionsQuery.isError || categoriesQuery.isError || trendQuery.isError
 
   const transactions = transactionsQuery.data ?? []
   const hasFamily = useHasFamily()
@@ -74,28 +78,24 @@ export function ReportsPage() {
         ))}
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-[20px] border border-border bg-surface shadow-card">
+          <QueryError
+            onRetry={() => {
+              void transactionsQuery.refetch()
+              void categoriesQuery.refetch()
+              void trendQuery.refetch()
+            }}
+          />
+        </div>
+      ) : isLoading ? (
         <ReportsSkeleton />
       ) : tab === 'summary' ? (
         <>
-          <div className="mb-4 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-            <ReportStat
-              label="Receitas"
-              value={formatMoney(summary.income)}
-              color="var(--income)"
-            />
-            <ReportStat
-              label="Despesas"
-              value={formatMoney(summary.expense)}
-              color="var(--expense)"
-            />
-            <ReportStat
-              label="Saldo"
-              value={formatSignedMoney(summary.balance)}
-              color={summary.balance >= 0 ? 'var(--income)' : 'var(--expense)'}
-            />
+          <div className="mb-4">
+            <MonthSummaryCards summary={summary} />
           </div>
-          <TrendChart points={trendQuery.data ?? []} />
+          <TrendChart key={`${year}-${month}`} points={trendQuery.data ?? []} />
         </>
       ) : tab === 'category' ? (
         <ReportCard title="Despesas por categoria" total={categoryReport.total}>
@@ -147,71 +147,83 @@ export function ReportsPage() {
   )
 }
 
-function ReportStat({
-  label,
-  value,
-  color,
-}: {
-  label: string
-  value: string
-  color: string
-}) {
-  return (
-    <div className="rounded-[18px] border border-border bg-surface px-[18px] py-4 shadow-card">
-      <div className="mb-[7px] text-[12.5px] font-semibold text-text-2">
-        {label}
-      </div>
-      <div
-        className="text-[21px] font-extrabold tabular-nums"
-        style={{ color }}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
 function TrendChart({ points }: { points: MonthlyTrendPoint[] }) {
+  const [selected, setSelected] = useState(points.length - 1)
   const max = Math.max(...points.map((p) => Math.max(p.income, p.expense)), 0)
-  const barHeight = (value: number) => (max ? (value / max) * 130 : 0)
+  const barHeight = (value: number) => (max ? (value / max) * 120 : 0)
+  const current = points[selected]
 
   return (
-    <div className="rounded-[20px] border border-border bg-surface p-[22px] shadow-card">
-      <div className="mb-1.5 text-[15px] font-bold">
-        Evolução dos últimos 6 meses
+    <div className="rounded-[20px] border border-border bg-surface p-5 shadow-card sm:p-[22px]">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="text-[15px] font-bold">Evolução dos últimos 6 meses</div>
+        <div className="flex items-center gap-4 text-[12.5px] text-text-2">
+          <span className="flex items-center gap-1.5">
+            <span className="h-[10px] w-[10px] rounded-[3px] bg-chart-income" />
+            Receitas
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-[10px] w-[10px] rounded-[3px] bg-chart-expense" />
+            Despesas
+          </span>
+        </div>
       </div>
-      <div className="mb-[18px] flex items-center gap-4 text-[12.5px] text-text-2">
-        <span className="flex items-center gap-1.5">
-          <span className="h-[11px] w-[11px] rounded-[3px] bg-income" />
-          Receitas
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-[11px] w-[11px] rounded-[3px] bg-expense" />
-          Despesas
-        </span>
-      </div>
-      <div className="flex h-40 items-end justify-between gap-2.5">
-        {points.map((point) => (
-          <div
+
+      {current && (
+        <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-1 rounded-xl bg-surface-2 px-3.5 py-2.5 text-[13px] text-text-2">
+          <span className="font-semibold text-text">
+            {formatPeriodLabel(current.year, current.month)}
+          </span>
+          <span>
+            Receitas{' '}
+            <strong className="tabular-nums text-text">
+              {formatMoney(current.income)}
+            </strong>
+          </span>
+          <span>
+            Despesas{' '}
+            <strong className="tabular-nums text-text">
+              {formatMoney(current.expense)}
+            </strong>
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-end justify-between gap-1 border-b border-border">
+        {points.map((point, index) => (
+          <button
             key={`${point.year}-${point.month}`}
-            className="flex h-full flex-1 flex-col items-center justify-end gap-2"
+            type="button"
+            onClick={() => setSelected(index)}
+            onMouseEnter={() => setSelected(index)}
+            onFocus={() => setSelected(index)}
+            aria-pressed={index === selected}
+            aria-label={`${formatPeriodLabel(point.year, point.month)}: receitas ${formatMoney(point.income)}, despesas ${formatMoney(point.expense)}`}
+            className={`flex h-[136px] flex-1 items-end justify-center gap-[3px] rounded-t-lg pt-2 transition-colors ${
+              index === selected ? 'bg-surface-2' : 'hover:bg-surface-2/60'
+            }`}
           >
-            <div className="flex h-[130px] items-end gap-1">
-              <div
-                title={formatMoney(point.income)}
-                className="w-[13px] rounded-t-[5px] bg-income"
-                style={{ height: barHeight(point.income) }}
-              />
-              <div
-                title={formatMoney(point.expense)}
-                className="w-[13px] rounded-t-[5px] bg-expense"
-                style={{ height: barHeight(point.expense) }}
-              />
-            </div>
-            <span className="text-[12px] font-semibold text-text-3">
-              {formatMonthShort(point.month)}
-            </span>
-          </div>
+            <span
+              className="w-[11px] rounded-t-[4px] bg-chart-income"
+              style={{ height: barHeight(point.income) }}
+            />
+            <span
+              className="w-[11px] rounded-t-[4px] bg-chart-expense"
+              style={{ height: barHeight(point.expense) }}
+            />
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between gap-1">
+        {points.map((point, index) => (
+          <span
+            key={`${point.year}-${point.month}`}
+            className={`flex-1 text-center text-[12px] font-semibold ${
+              index === selected ? 'text-text' : 'text-text-3'
+            }`}
+          >
+            {formatMonthShort(point.month)}
+          </span>
         ))}
       </div>
     </div>

@@ -7,7 +7,11 @@ interface ProblemDetails {
 }
 
 export function isUnauthorizedError(error: unknown): boolean {
-  return error instanceof AxiosError && error.response?.status === 401
+  return getApiErrorStatus(error) === 401
+}
+
+export function getApiErrorStatus(error: unknown): number | undefined {
+  return error instanceof AxiosError ? error.response?.status : undefined
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {

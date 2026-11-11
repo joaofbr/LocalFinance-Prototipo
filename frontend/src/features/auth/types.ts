@@ -5,6 +5,7 @@ export interface User {
   name: string
   email: string
   role: UserRole
+  developer: boolean
 }
 
 export interface AuthResponse {
@@ -12,6 +13,11 @@ export interface AuthResponse {
   expiresAt: string
   user: User
   refreshToken: string
+}
+
+export interface RegisterResponse {
+  pendingApproval: boolean
+  session: AuthResponse | null
 }
 
 export interface LoginRequest {

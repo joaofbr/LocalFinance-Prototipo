@@ -77,6 +77,17 @@ Sobe em `http://localhost:5173`, origem já liberada no CORS da API.
 
 ### 4. Primeiro acesso
 
+O sistema está em **beta fechado**: cada cadastro novo fica pendente até ser aprovado no **Console**,
+a área do desenvolvedor. Configure o seu e-mail como desenvolvedor antes de usar:
+
+```bash
+cd backend/src/LocalFinance.Api
+dotnet user-secrets set "Platform:DeveloperEmails:0" "voce@email.com"
+```
+
+Com isso, o cadastro com esse e-mail já nasce liberado, o menu mostra **Console** e é por lá que você
+aprova, recusa, suspende e reativa contas. Quem é aprovado ou recusado recebe um e-mail.
+
 Não há usuário semeado: crie o seu em **Criar conta**. Cada cadastro abre um
 espaço próprio e isolado, com suas categorias e lançamentos, e quem se cadastra é o
 **Admin** dele. Toda conta nasce no **modo individual**: só o dono usa, e as
@@ -114,6 +125,7 @@ ou variável de ambiente:
 | `Jwt:Key` | `Jwt__Key` | Sim, mínimo 32 bytes |
 | `ConnectionStrings:Default` | `ConnectionStrings__Default` | Só fora do Postgres local |
 | `Smtp:Password` | `Smtp__Password` | Só se for enviar e-mail de verdade |
+| `Platform:DeveloperEmails` | `Platform__DeveloperEmails__0` | Sim, para alguém aprovar cadastros |
 
 #### Publicação
 

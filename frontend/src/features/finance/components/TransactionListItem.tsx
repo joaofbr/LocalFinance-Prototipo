@@ -3,7 +3,6 @@ import {
   formatDateShort,
   formatMoney,
   getInitials,
-  hexToRgba,
   joinNames,
 } from '@/lib/format'
 import { CategoryIconBadge } from './CategoryIconBadge'
@@ -53,81 +52,77 @@ export function TransactionListItem({
   const isShare = shared && amount !== entry.total
 
   return (
-    <div className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-0">
-      <CategoryIconBadge icon={category.icon} color={category.color} />
+    <div className="group flex items-center border-b border-border last:border-0">
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Editar ${transaction.description}`}
+        className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-4 pr-3 text-left transition-colors hover:bg-surface-2/60 sm:pr-2"
+      >
+        <CategoryIconBadge icon={category.icon} color={category.color} />
 
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[14.5px] font-semibold">
-          {transaction.description}
-        </div>
-        <div className="mt-[3px] flex items-center gap-1.5 text-[12px] text-text-3">
-          {showParticipants && (
-            <span
-              className="flex flex-shrink-0"
-              title={shared ? `Dividido entre ${joinNames(people.map((p) => p.name))}` : undefined}
-            >
-              {people.map((person, index) => (
-                <span
-                  key={person.id || index}
-                  className={`rounded-full bg-surface ring-2 ring-surface ${index > 0 ? '-ml-1.5' : ''}`}
-                >
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[14.5px] font-semibold">
+              {transaction.description}
+            </span>
+            <SeriesBadge transaction={transaction} showShared={false} />
+          </span>
+          <span className="mt-[3px] flex items-center gap-1.5 text-[12px] text-text-3">
+            {showParticipants && (
+              <span
+                className="flex flex-shrink-0 -space-x-0.5"
+                title={joinNames(people.map((p) => p.name))}
+              >
+                {people.map((person, index) => (
                   <span
-                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[10px] font-bold"
+                    key={person.id || index}
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9.5px] font-bold ring-2 ring-surface"
                     style={{
-                      background: hexToRgba(person.color, 0.16),
+                      background: `color-mix(in srgb, ${person.color} 18%, var(--surface))`,
                       color: person.color,
                     }}
                   >
                     {getInitials(person.name)}
                   </span>
-                </span>
-              ))}
+                ))}
+              </span>
+            )}
+            <span className="truncate">
+              {showParticipants && (
+                <span className="hidden sm:inline">{names} · </span>
+              )}
+              {category.name} · {formatDateShort(transaction.date)}
+            </span>
+          </span>
+        </span>
+
+        <span className="flex flex-shrink-0 flex-col items-end">
+          <span
+            className={`whitespace-nowrap text-[15px] font-bold tabular-nums ${
+              isIncome ? 'text-income' : 'text-expense'
+            }`}
+          >
+            {isIncome ? '+ ' : '− '}
+            {formatMoney(amount)}
+          </span>
+          {isShare && (
+            <span className="whitespace-nowrap text-[11px] tabular-nums text-text-3">
+              de {formatMoney(entry.total)}
             </span>
           )}
-          <span className="truncate">
-            {showParticipants && `${names} · `}
-            {category.name} · {formatDateShort(transaction.date)}
-          </span>
-          <SeriesBadge transaction={transaction} showShared={false} />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-end">
-        <span
-          className={`whitespace-nowrap text-[15px] font-bold tabular-nums ${
-            isIncome ? 'text-income' : 'text-expense'
-          }`}
-        >
-          {isIncome ? '+ ' : '- '}
-          {formatMoney(amount)}
         </span>
-        {isShare && (
-          <span className="whitespace-nowrap text-[11px] tabular-nums text-text-3">
-            de {formatMoney(entry.total)}
-          </span>
-        )}
-      </div>
+      </button>
 
-      <div className="flex gap-0.5">
-        <button
-          type="button"
-          onClick={onEdit}
-          title="Editar"
-          aria-label="Editar"
-          className="flex h-[34px] w-[34px] items-center justify-center rounded-lg text-text-3 hover:bg-surface-2"
-        >
-          <Icon name="pencil" size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          title="Excluir"
-          aria-label="Excluir"
-          className="flex h-[34px] w-[34px] items-center justify-center rounded-lg text-text-3 hover:bg-surface-2 hover:text-expense"
-        >
-          <Icon name="trash" size={16} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onDelete}
+        title="Excluir"
+        aria-label={`Excluir ${transaction.description}`}
+        className="mr-3 hidden h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-lg text-text-3 hover:bg-surface-2 hover:text-expense focus-visible:flex sm:flex"
+      >
+        <Icon name="trash" size={16} />
+      </button>
     </div>
   )
 }

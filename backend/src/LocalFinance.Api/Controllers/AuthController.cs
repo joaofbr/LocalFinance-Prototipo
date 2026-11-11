@@ -38,7 +38,7 @@ public class AuthController(IAuthService auth, IMemberInviteService invites) : C
 
     [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("register")]
-    public async Task<AuthResponse> Register(RegisterRequest request, CancellationToken ct) =>
+    public async Task<RegisterResponse> Register(RegisterRequest request, CancellationToken ct) =>
         await auth.RegisterAsync(request, ct);
 
     [HttpPost("refresh")]

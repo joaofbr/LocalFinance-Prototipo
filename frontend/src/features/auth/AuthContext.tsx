@@ -19,7 +19,7 @@ interface AuthContextValue {
   status: AuthStatus
   user: User | null
   login: (payload: LoginRequest) => Promise<void>
-  register: (payload: RegisterRequest) => Promise<void>
+  register: (payload: RegisterRequest) => Promise<{ pendingApproval: boolean }>
   logout: () => void
 }
 
@@ -83,11 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (payload: RegisterRequest) => {
-      const result = await authApi.register(payload)
-      await tokenStorage.set(result.token, result.refreshToken)
-      queryClient.clear()
-      setUser(result.user)
-      setStatus('authenticated')
+      const { pendingApproval, session } = await authApi.register(payload)
+      if (session) {
+        await tokenStorage.set(session.token, session.refreshToken)
+        queryClient.clear()
+        setUser(session.user)
+        setStatus('authenticated')
+      }
+      return { pendingApproval }
     },
     [queryClient],
   )

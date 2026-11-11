@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { formatMoney, formatSignedMoney } from '@/lib/format'
 import { MonthSelector } from '@/features/finance/components/MonthSelector'
-import { StatCard } from '@/features/finance/components/StatCard'
+import { MonthSummaryCards } from '@/features/finance/components/MonthSummaryCards'
 import { DonutChart } from '@/features/finance/components/DonutChart'
 import { RecentTransactions } from '@/features/finance/components/RecentTransactions'
 import { usePeriod } from '@/features/finance/PeriodContext'
@@ -18,6 +18,7 @@ export function DashboardPage() {
   const categoriesQuery = useCategories()
 
   const isLoading = transactionsQuery.isLoading || categoriesQuery.isLoading
+  const isError = transactionsQuery.isError || categoriesQuery.isError
   const transactions = transactionsQuery.data ?? []
   const categories = categoriesQuery.data ?? []
 
@@ -34,32 +35,21 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-2xl border border-border bg-surface shadow-card">
+          <QueryError
+            onRetry={() => {
+              void transactionsQuery.refetch()
+              void categoriesQuery.refetch()
+            }}
+          />
+        </div>
+      ) : isLoading ? (
         <DashboardSkeleton />
       ) : (
         <>
-          <div className="mb-[18px] grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Receitas"
-              value={formatMoney(summary.income)}
-              icon="arrowUp"
-              tone="income"
-            />
-            <StatCard
-              label="Despesas"
-              value={formatMoney(summary.expense)}
-              icon="arrowDown"
-              tone="expense"
-            />
-            <StatCard
-              label="Saldo do mês"
-              value={formatSignedMoney(summary.balance)}
-              icon="wallet2"
-              tone="neutral"
-              valueColor={
-                summary.balance >= 0 ? 'var(--income)' : 'var(--expense)'
-              }
-            />
+          <div className="mb-[18px]">
+            <MonthSummaryCards summary={summary} />
           </div>
 
           <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
@@ -94,10 +84,12 @@ export function DashboardPage() {
 function DashboardSkeleton() {
   return (
     <>
-      <div className="mb-[18px] grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        <Skeleton height={118} />
-        <Skeleton height={118} />
-        <Skeleton height={118} />
+      <div className="mb-[18px] grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-3.5">
+        <div className="col-span-2 lg:col-span-1">
+          <Skeleton height={104} />
+        </div>
+        <Skeleton height={104} />
+        <Skeleton height={104} />
       </div>
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <Skeleton height={280} />

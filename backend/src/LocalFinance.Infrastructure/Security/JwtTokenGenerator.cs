@@ -12,7 +12,7 @@ namespace LocalFinance.Infrastructure.Security;
 
 public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerator
 {
-    public (string Token, DateTime ExpiresAt) Generate(User user)
+    public (string Token, DateTime ExpiresAt) Generate(User user, bool developer)
     {
         var opts = options.Value;
         var expiresAt = DateTime.UtcNow.AddHours(opts.ExpiryHours);
@@ -25,6 +25,10 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerato
             new(AppClaims.Household, user.HouseholdId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+        if (developer)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, AppClaims.DeveloperRole));
+        }
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(opts.Key));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(

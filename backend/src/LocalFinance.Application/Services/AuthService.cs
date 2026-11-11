@@ -11,11 +11,13 @@ namespace LocalFinance.Application.Services;
 
 public class AuthService(
     IUserRepository users,
+    IHouseholdRepository households,
     ICategoryRepository categories,
     IRefreshTokenRepository refreshTokens,
     IPasswordHasher hasher,
     IJwtTokenGenerator tokens,
-    RefreshTokenOptions refreshOptions) : IAuthService
+    RefreshTokenOptions refreshOptions,
+    PlatformOptions platform) : IAuthService
 {
     private const int MinPasswordLength = 8;
 
@@ -36,10 +38,11 @@ public class AuthService(
         {
             throw new UnauthorizedException("Este usuário está desativado.");
         }
+        await EnsureHouseholdActiveAsync(user.HouseholdId, ct);
         return await BuildResponseAsync(user, ct);
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length < 2)
         {
@@ -60,7 +63,12 @@ public class AuthService(
             throw new ConflictException("Já existe uma conta com este e-mail.");
         }
 
-        var household = new Household();
+        var developer = platform.IsDeveloper(email);
+        var household = new Household
+        {
+            Status = developer ? HouseholdStatus.Active : HouseholdStatus.Pending,
+            ApprovedAt = developer ? DateTime.UtcNow : null,
+        };
         var user = new User
         {
             Household = household,
@@ -74,13 +82,17 @@ public class AuthService(
         await users.AddAsync(user, ct);
         await categories.AddRangeAsync(DefaultCategories.For(household.Id), ct);
         await users.SaveChangesAsync(ct);
-        return await BuildResponseAsync(user, ct);
+
+        return household.Status == HouseholdStatus.Active
+            ? new RegisterResponse(false, await BuildResponseAsync(user, ct))
+            : new RegisterResponse(true, null);
     }
 
     public async Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
         var entry = await GetUsableTokenAsync(refreshToken, now, ct);
+        await EnsureHouseholdActiveAsync(entry.User!.HouseholdId, ct);
 
         entry.RevokedAt = now;
         return await BuildResponseAsync(entry.User!, ct);
@@ -149,6 +161,31 @@ public class AuthService(
         return ToDto(user);
     }
 
+    public async Task<bool> IsSessionValidAsync(
+        Guid userId, Guid householdId, bool admin, bool developer, CancellationToken ct = default)
+    {
+        var user = await users.GetWithHouseholdAsync(userId, ct);
+        return user is { Active: true, Household.Status: HouseholdStatus.Active }
+            && user.HouseholdId == householdId
+            && (user.Role == UserRole.Admin) == admin
+            && platform.IsDeveloper(user.Email) == developer;
+    }
+
+    private async Task EnsureHouseholdActiveAsync(Guid householdId, CancellationToken ct)
+    {
+        var household = await households.GetByIdAsync(householdId, ct);
+        switch (household?.Status)
+        {
+            case HouseholdStatus.Active:
+                return;
+            case HouseholdStatus.Pending:
+                throw new ForbiddenException(
+                    "Seu cadastro ainda está em análise. Avisaremos por e-mail assim que o acesso for liberado.");
+            default:
+                throw new ForbiddenException("O acesso desta conta está suspenso.");
+        }
+    }
+
     private async Task<RefreshToken> GetUsableTokenAsync(
         string refreshToken, DateTime now, CancellationToken ct)
     {
@@ -167,7 +204,7 @@ public class AuthService(
 
     private async Task<AuthResponse> BuildResponseAsync(User user, CancellationToken ct)
     {
-        var (token, expiresAt) = tokens.Generate(user);
+        var (token, expiresAt) = tokens.Generate(user, platform.IsDeveloper(user.Email));
 
         var raw = Generate();
         var now = DateTime.UtcNow;
@@ -195,11 +232,12 @@ public class AuthService(
     private static string Hash(string raw) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw)));
 
-    private static UserDto ToDto(User user) => new(
+    private UserDto ToDto(User user) => new(
         user.Id.ToString(),
         user.Name,
         user.Email,
-        user.Role.ToDto());
+        user.Role.ToDto(),
+        platform.IsDeveloper(user.Email));
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 }

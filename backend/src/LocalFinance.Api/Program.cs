@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using LocalFinance.Api.Middleware;
 using LocalFinance.Api.Security;
@@ -38,6 +39,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IMemberInviteService, MemberInviteService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<IPlatformService, PlatformService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
@@ -52,6 +54,10 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton(
     builder.Configuration.GetSection(RefreshTokenOptions.SectionName).Get<RefreshTokenOptions>()
         ?? new RefreshTokenOptions());
+
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection(PlatformOptions.SectionName).Get<PlatformOptions>()
+        ?? new PlatformOptions());
 
 builder.Services.Configure<BrevoOptions>(
     builder.Configuration.GetSection(BrevoOptions.SectionName));
@@ -121,6 +127,31 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1),
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var principal = context.Principal!;
+                var valid =
+                    Guid.TryParse(
+                        principal.FindFirstValue(ClaimTypes.NameIdentifier)
+                            ?? principal.FindFirstValue("sub"),
+                        out var userId)
+                    && Guid.TryParse(principal.FindFirstValue(AppClaims.Household), out var householdId)
+                    && await context.HttpContext.RequestServices
+                        .GetRequiredService<IAuthService>()
+                        .IsSessionValidAsync(
+                            userId,
+                            householdId,
+                            principal.IsInRole("Admin"),
+                            principal.IsInRole(AppClaims.DeveloperRole),
+                            context.HttpContext.RequestAborted);
+                if (!valid)
+                {
+                    context.Fail("Sessão inválida.");
+                }
+            },
         };
     });
 builder.Services.AddAuthorization();

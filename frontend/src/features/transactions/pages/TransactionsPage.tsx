@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import type { IconName } from '@/components/ui/Icon'
+import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { useToast } from '@/components/ui/ToastProvider'
-import { formatMoney, formatSignedMoney } from '@/lib/format'
+import { formatMoney, formatSignedMoney, plural } from '@/lib/format'
 import { MonthSelector } from '@/features/finance/components/MonthSelector'
 import { FilterBar } from '@/features/finance/components/FilterBar'
 import {
@@ -11,16 +13,10 @@ import {
   type TransactionFilters,
 } from '@/features/finance/transactionFilters'
 import { TransactionListItem } from '@/features/finance/components/TransactionListItem'
-import { SeriesScopeDialog } from '@/features/finance/components/SeriesScopeDialog'
-import type {
-  Transaction,
-  TransactionScope,
-} from '@/features/finance/types'
 import { usePeriod } from '@/features/finance/PeriodContext'
 import { useTransactionSheet } from '@/features/finance/TransactionSheetProvider'
 import {
   useCategories,
-  useDeleteTransaction,
   useHasFamily,
   useMembers,
   useMonthlyTransactions,
@@ -31,31 +27,25 @@ import {
   shareOf,
 } from '@/features/finance/transactionEntries'
 
-const DELETE_MESSAGE: Record<TransactionScope, string> = {
-  one: 'Lançamento excluído',
-  future: 'Lançamentos futuros excluídos',
-  all: 'Série excluída',
-}
-
 export function TransactionsPage() {
-  const { year, month } = usePeriod()
-  const { openNew, openEdit } = useTransactionSheet()
-  const { showToast } = useToast()
+  const { year, month, label } = usePeriod()
+  const { openNew, openEdit, requestDelete } = useTransactionSheet()
   const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
-  const [confirmingDelete, setConfirmingDelete] = useState<Transaction | null>(
-    null,
-  )
 
   const transactionsQuery = useMonthlyTransactions(year, month)
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
   const hasFamily = useHasFamily()
-  const deleteMutation = useDeleteTransaction()
 
   const isLoading =
     transactionsQuery.isLoading ||
     categoriesQuery.isLoading ||
     membersQuery.isLoading
+  const isError = transactionsQuery.isError || categoriesQuery.isError
+  const filtering =
+    filters.type !== 'all' ||
+    filters.categoryId !== 'all' ||
+    filters.memberId !== 'all'
 
   const categories = categoriesQuery.data ?? []
   const members = membersQuery.data ?? []
@@ -81,26 +71,6 @@ export function TransactionsPage() {
     rows.map(({ entry, amount }) => ({ type: entry.transaction.type, amount })),
   )
 
-  const removeTransaction = (id: string, scope: TransactionScope) => {
-    deleteMutation.mutate(
-      { id, scope },
-      {
-        onSuccess: () => {
-          setConfirmingDelete(null)
-          showToast(DELETE_MESSAGE[scope], 'neutral')
-        },
-      },
-    )
-  }
-
-  const handleDelete = (transaction: Transaction) => {
-    if ((transaction.seriesTotal ?? 1) > 1) {
-      setConfirmingDelete(transaction)
-      return
-    }
-    removeTransaction(transaction.id, 'one')
-  }
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -120,14 +90,47 @@ export function TransactionsPage() {
       />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-        {isLoading ? (
+        {isError ? (
+          <QueryError
+            onRetry={() => {
+              void transactionsQuery.refetch()
+              void categoriesQuery.refetch()
+            }}
+          />
+        ) : isLoading ? (
           <div className="flex flex-col gap-3 p-4">
             {Array.from({ length: 5 }).map((_, index) => (
               <Skeleton key={index} height={52} />
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState onNew={openNew} />
+          filtering ? (
+            <EmptyState
+              icon="filter"
+              title="Nada com esses filtros"
+              text="Nenhum lançamento do mês combina com os filtros escolhidos."
+            >
+              <Button
+                type="button"
+                variant="secondary"
+                className="mx-auto"
+                onClick={() => setFilters(DEFAULT_FILTERS)}
+              >
+                Limpar filtros
+              </Button>
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon="list"
+              title={`Nenhum lançamento em ${label.toLowerCase()}`}
+              text="Registre uma receita ou despesa para começar a acompanhar o mês."
+            >
+              <Button type="button" className="mx-auto" onClick={openNew}>
+                <Icon name="plus" size={18} />
+                Novo lançamento
+              </Button>
+            </EmptyState>
+          )
         ) : (
           <>
             <div className="flex flex-col">
@@ -142,22 +145,18 @@ export function TransactionsPage() {
                   )}
                   showParticipants={hasFamily}
                   onEdit={() => openEdit(entry)}
-                  onDelete={() => handleDelete(entry.transaction)}
+                  onDelete={() => requestDelete(entry.transaction)}
                 />
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3.5 bg-surface-2 px-4 py-[15px]">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 bg-surface-2 px-4 py-[15px]">
               <span className="text-[13px] font-semibold text-text-2">
-                {rows.length} lançamento(s)
+                {plural(rows.length, 'lançamento', 'lançamentos')}
               </span>
-              <div className="flex items-center gap-[18px] text-[13px]">
+              <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1 text-[13px]">
                 <SummaryStat label="Receitas" value={summary.income} tone="income" />
-                <SummaryStat
-                  label="Despesas"
-                  value={summary.expense}
-                  tone="expense"
-                />
+                <SummaryStat label="Despesas" value={summary.expense} tone="expense" />
                 <SummaryStat
                   label="Saldo"
                   value={summary.balance}
@@ -169,16 +168,6 @@ export function TransactionsPage() {
           </>
         )}
       </div>
-
-      {confirmingDelete && (
-        <SeriesScopeDialog
-          transaction={confirmingDelete}
-          action="delete"
-          busy={deleteMutation.isPending}
-          onChoose={(scope) => removeTransaction(confirmingDelete.id, scope)}
-          onCancel={() => setConfirmingDelete(null)}
-        />
-      )}
     </div>
   )
 }
@@ -206,22 +195,25 @@ function SummaryStat({
   )
 }
 
-function EmptyState({ onNew }: { onNew: () => void }) {
+function EmptyState({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: IconName
+  title: string
+  text: string
+  children: ReactNode
+}) {
   return (
     <div className="px-6 py-[54px] text-center">
       <div className="mx-auto mb-[18px] flex h-[74px] w-[74px] items-center justify-center rounded-[22px] bg-surface-2 text-text-3">
-        <Icon name="search" size={30} strokeWidth={1.6} />
+        <Icon name={icon} size={30} strokeWidth={1.6} />
       </div>
-      <div className="mb-1.5 text-[16px] font-bold">
-        Nenhum lançamento encontrado
-      </div>
-      <p className="mx-auto mb-5 max-w-[300px] text-[14px] text-text-2">
-        Ajuste os filtros do período ou registre uma nova transação para começar.
-      </p>
-      <Button onClick={onNew} type="button" className="mx-auto">
-        <Icon name="plus" size={18} />
-        Novo lançamento
-      </Button>
+      <div className="mb-1.5 text-[16px] font-bold">{title}</div>
+      <p className="mx-auto mb-5 max-w-[300px] text-[14px] text-text-2">{text}</p>
+      {children}
     </div>
   )
 }

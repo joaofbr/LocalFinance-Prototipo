@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/ui/ToastProvider'
+import { getApiErrorMessage } from '@/lib/apiError'
+import { plural } from '@/lib/format'
 import { CategoryIconBadge } from '@/features/finance/components/CategoryIconBadge'
 import type { Category, CategoryInput, CategoryKind } from '@/features/finance/types'
 import {
@@ -14,10 +17,10 @@ import {
 } from '@/features/finance/hooks'
 import { CategoryFormModal } from '../components/CategoryFormModal'
 
-const KIND_BADGES: Record<CategoryKind, { label: string; className: string }> = {
-  income: { label: 'Receita', className: 'bg-income-bg text-income' },
-  expense: { label: 'Despesa', className: 'bg-expense-bg text-expense' },
-  both: { label: 'Ambos', className: 'bg-neutral-bg text-neutral' },
+const KIND_LABELS: Record<CategoryKind, string> = {
+  income: 'Receita',
+  expense: 'Despesa',
+  both: 'Receita e despesa',
 }
 
 export function CategoriesPage() {
@@ -34,6 +37,9 @@ export function CategoriesPage() {
   const usage = usageQuery.data ?? {}
   const saving = createMutation.isPending || updateMutation.isPending
 
+  const showError = (fallback: string) => (error: unknown) =>
+    showToast(getApiErrorMessage(error, fallback), 'warning')
+
   const handleSubmit = (input: CategoryInput) => {
     if (modal?.editing) {
       updateMutation.mutate(
@@ -43,6 +49,7 @@ export function CategoriesPage() {
             setModal(null)
             showToast('Categoria atualizada')
           },
+          onError: showError('Não foi possível salvar a categoria'),
         },
       )
     } else {
@@ -51,6 +58,7 @@ export function CategoriesPage() {
           setModal(null)
           showToast('Categoria criada')
         },
+        onError: showError('Não foi possível criar a categoria'),
       })
     }
   }
@@ -64,6 +72,7 @@ export function CategoriesPage() {
             category.active ? 'Categoria inativada' : 'Categoria reativada',
             'neutral',
           ),
+        onError: showError('Não foi possível alterar a categoria'),
       },
     )
   }
@@ -71,14 +80,9 @@ export function CategoriesPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[18px] font-extrabold tracking-tight">
-            Categorias
-          </h2>
-          <p className="mt-[3px] text-[13.5px] text-text-2">
-            Organize receitas e despesas por categoria.
-          </p>
-        </div>
+        <p className="text-[13.5px] text-text-2">
+          Organize receitas e despesas por categoria.
+        </p>
         <Button
           type="button"
           className="flex-shrink-0"
@@ -90,7 +94,9 @@ export function CategoriesPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-        {categoriesQuery.isLoading ? (
+        {categoriesQuery.isError ? (
+          <QueryError onRetry={() => void categoriesQuery.refetch()} />
+        ) : categoriesQuery.isLoading ? (
           <div className="flex flex-col gap-3 p-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <Skeleton key={index} height={52} />
@@ -129,46 +135,49 @@ interface CategoryRowProps {
 }
 
 function CategoryRow({ category, count, onEdit, onToggle }: CategoryRowProps) {
-  const badge = KIND_BADGES[category.kind]
   return (
     <div
-      className={`flex items-center gap-3.5 border-b border-border px-4 py-3.5 last:border-b-0 ${
+      className={`flex items-center gap-2 border-b border-border pr-4 last:border-b-0 ${
         category.active ? '' : 'opacity-60'
       }`}
     >
-      <CategoryIconBadge
-        icon={category.icon}
-        color={category.color}
-        size={42}
-        iconSize={20}
-        muted={!category.active}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[14.5px] font-semibold">{category.name}</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badge.className}`}
-          >
-            {badge.label}
-          </span>
-        </div>
-        <div className="mt-0.5 text-[12.5px] text-text-3">
-          {count} lançamento(s)
-        </div>
-      </div>
       <button
         type="button"
         onClick={onEdit}
-        title="Editar"
         aria-label={`Editar ${category.name}`}
-        className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
+        className="flex min-w-0 flex-1 items-center gap-3.5 py-3.5 pl-4 text-left transition-colors hover:bg-surface-2/60"
       >
-        <Icon name="pencil" size={16} />
+        <CategoryIconBadge
+          icon={category.icon}
+          color={category.color}
+          size={42}
+          iconSize={20}
+          muted={!category.active}
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14.5px] font-semibold">
+            {category.name}
+            {!category.active && (
+              <span className="ml-2 text-[12px] font-medium text-text-3">
+                (inativa)
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block truncate text-[12.5px] text-text-3">
+            {KIND_LABELS[category.kind]} · {plural(count, 'lançamento', 'lançamentos')}
+          </span>
+        </span>
+        <span
+          aria-hidden
+          className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 sm:flex"
+        >
+          <Icon name="pencil" size={16} />
+        </span>
       </button>
       <button
         type="button"
         onClick={onToggle}
-        className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
+        className="flex-shrink-0 whitespace-nowrap rounded-[10px] border border-border-strong px-3 py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
       >
         {category.active ? 'Inativar' : 'Reativar'}
       </button>

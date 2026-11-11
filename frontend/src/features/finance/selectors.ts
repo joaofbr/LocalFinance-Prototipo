@@ -1,6 +1,6 @@
 import type { Category, Member, Transaction } from './types'
 
-interface MonthlySummary {
+export interface MonthlySummary {
   income: number
   expense: number
   balance: number
@@ -13,12 +13,15 @@ export interface DonutSegment {
 }
 
 export interface DonutLegendItem {
-  categoryId: string
+  id: string
   name: string
   color: string
   amount: number
   percent: number
 }
+
+const MAX_DONUT_SLICES = 6
+const DONUT_GAP = 0.6
 
 type Amounted = Pick<Transaction, 'type' | 'amount'>
 
@@ -51,24 +54,41 @@ export function getDonut(transactions: Transaction[], categories: Category[]) {
   const entries = getExpensesByCategory(transactions, categories)
   const total = entries.reduce((acc, e) => acc + e.amount, 0)
 
+  const folds = entries.length > MAX_DONUT_SLICES
+  const head = folds ? entries.slice(0, MAX_DONUT_SLICES - 1) : entries
+  const rest = folds ? entries.slice(MAX_DONUT_SLICES - 1) : []
+  const slices = head.map((e) => ({
+    id: e.category.id,
+    name: e.category.name,
+    color: e.category.color,
+    amount: e.amount,
+  }))
+  if (rest.length > 0) {
+    slices.push({
+      id: 'other',
+      name: `Outras (${rest.length})`,
+      color: 'var(--chart-other)',
+      amount: rest.reduce((acc, e) => acc + e.amount, 0),
+    })
+  }
+
+  const gap = slices.length > 1 ? DONUT_GAP : 0
   let cumulative = 0
-  const segments: DonutSegment[] = entries.map((e) => {
-    const percent = total ? (e.amount / total) * 100 : 0
+  const segments: DonutSegment[] = slices.map((slice) => {
+    const percent = total ? (slice.amount / total) * 100 : 0
+    const visible = Math.max(percent - gap, 0)
     const segment: DonutSegment = {
-      color: e.category.color,
-      dash: `${percent.toFixed(2)} ${(100 - percent).toFixed(2)}`,
+      color: slice.color,
+      dash: `${visible.toFixed(2)} ${(100 - visible).toFixed(2)}`,
       offset: (25 - cumulative).toFixed(2),
     }
     cumulative += percent
     return segment
   })
 
-  const legend: DonutLegendItem[] = entries.slice(0, 6).map((e) => ({
-    categoryId: e.category.id,
-    name: e.category.name,
-    color: e.category.color,
-    amount: e.amount,
-    percent: total ? Math.round((e.amount / total) * 100) : 0,
+  const legend: DonutLegendItem[] = slices.map((slice) => ({
+    ...slice,
+    percent: total ? Math.round((slice.amount / total) * 100) : 0,
   }))
 
   return { segments, legend, total }

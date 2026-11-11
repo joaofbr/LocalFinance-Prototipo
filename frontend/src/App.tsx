@@ -11,6 +11,7 @@ import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
 import { MembersPage } from '@/features/members/pages/MembersPage'
 import { FamilyModePage } from '@/features/household/pages/FamilyModePage'
+import { ConsolePage } from '@/features/platform/pages/ConsolePage'
 import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
 import { MorePage } from '@/features/more/pages/MorePage'
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/modo-familia" element={<FamilyModePage />} />
+          <Route path="/console" element={<ConsolePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/mais" element={<MorePage />} />
         </Route>

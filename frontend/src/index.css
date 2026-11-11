@@ -20,6 +20,9 @@
   --color-expense-bg: var(--expense-bg);
   --color-neutral: var(--neutral);
   --color-neutral-bg: var(--neutral-bg);
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+  --color-brand-ink: var(--brand-ink);
 
   --shadow-card: var(--shadow);
   --shadow-card-md: var(--shadow-md);
@@ -49,6 +52,10 @@
   --expense-bg: #fef2f2;
   --neutral: #64748b;
   --neutral-bg: #f1f5f9;
+  --chart-income: #059669;
+  --chart-expense: #dc2626;
+  --chart-other: #94a3b8;
+  --brand-ink: #0c3a2d;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   --shadow-md: 0 6px 20px -6px rgba(16, 24, 40, 0.12);
   --shadow-lg: 0 18px 40px -12px rgba(16, 24, 40, 0.22);
@@ -75,6 +82,9 @@
   --expense-bg: #2a1414;
   --neutral: #94a3b8;
   --neutral-bg: #1a2430;
+  --chart-income: #199e70;
+  --chart-expense: #e66767;
+  --chart-other: #64748b;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
@@ -112,6 +122,26 @@ body {
 
 .safe-content {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+@keyframes tour-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 768px) {

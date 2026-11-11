@@ -53,6 +53,25 @@ export function defaultDateInPeriod(year: number, month: number): string {
   return toIsoDate(new Date(year, month, Math.min(today.getDate(), lastDay)))
 }
 
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR')
+}
+
+export function formatDaysAgo(iso: string): string {
+  const startOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const days = Math.round(
+    (startOfDay(new Date()) - startOfDay(new Date(iso))) / 86_400_000,
+  )
+  if (days <= 0) return 'hoje'
+  if (days === 1) return 'ontem'
+  return `há ${days} dias`
+}
+
+export function plural(count: number, singular: string, pluralForm: string): string {
+  return `${count} ${count === 1 ? singular : pluralForm}`
+}
+
 export function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? ''
   return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`

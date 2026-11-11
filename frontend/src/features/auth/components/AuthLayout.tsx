@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
+import { BetaBadge } from './BetaBadge'
 import { BrandPanel } from './BrandPanel'
 
 interface AuthLayoutProps {
@@ -8,9 +9,10 @@ interface AuthLayoutProps {
   subtitle: string
   children: ReactNode
   footer?: ReactNode
+  note?: string
 }
 
-export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, children, footer, note }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen">
       <BrandPanel />
@@ -21,8 +23,9 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
         </div>
 
         <div className="w-full max-w-[380px]">
-          <div className="mb-8 flex justify-center lg:hidden">
+          <div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
             <Logo size={44} />
+            <BetaBadge />
           </div>
 
           <h2 className="mb-1.5 text-[26px] font-extrabold tracking-tight">
@@ -34,6 +37,12 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
 
           {footer && (
             <p className="mt-6 text-center text-[13.5px] text-text-2">{footer}</p>
+          )}
+
+          {note && (
+            <p className="mt-8 border-t border-border pt-5 text-center text-[12.5px] leading-relaxed text-text-3">
+              {note}
+            </p>
           )}
         </div>
       </div>

@@ -9,6 +9,7 @@ interface StatCardProps {
   icon: IconName
   tone: Tone
   valueColor?: string
+  className?: string
 }
 
 const TONE_STYLES: Record<Tone, { badge: string; value: string }> = {
@@ -17,20 +18,29 @@ const TONE_STYLES: Record<Tone, { badge: string; value: string }> = {
   neutral: { badge: 'bg-neutral-bg text-neutral', value: 'text-text' },
 }
 
-export function StatCard({ label, value, icon, tone, valueColor }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon,
+  tone,
+  valueColor,
+  className = '',
+}: StatCardProps) {
   const styles = TONE_STYLES[tone]
   return (
-    <div className="rounded-2xl border border-border bg-surface px-5 py-[18px] shadow-card">
-      <div className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-text-2">
+    <div
+      className={`min-w-0 rounded-2xl border border-border bg-surface px-4 py-4 shadow-card sm:px-5 sm:py-[18px] ${className}`}
+    >
+      <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-text-2">
         <span
-          className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg ${styles.badge}`}
+          className={`flex h-[28px] w-[28px] flex-shrink-0 items-center justify-center rounded-lg ${styles.badge}`}
         >
           <Icon name={icon} size={15} />
         </span>
-        {label}
+        <span className="truncate">{label}</span>
       </div>
       <div
-        className={`text-[25px] font-extrabold tracking-tight tabular-nums ${styles.value}`}
+        className={`truncate text-[20px] font-extrabold tracking-tight sm:text-[25px] ${styles.value}`}
         style={valueColor ? { color: valueColor } : undefined}
       >
         {value}

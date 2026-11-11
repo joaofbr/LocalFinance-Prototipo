@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/TextField'
 import { FormAlert } from '@/components/ui/FormAlert'
-import { getApiErrorMessage } from '@/lib/apiError'
+import { getApiErrorMessage, getApiErrorStatus } from '@/lib/apiError'
 import { useAuth } from '../useAuth'
 import { loginSchema } from '../schemas'
 import type { LoginFormValues } from '../schemas'
@@ -14,7 +14,10 @@ import { AuthLayout } from '../components/AuthLayout'
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [submitError, setSubmitError] = useState('')
+  const [submitError, setSubmitError] = useState<{
+    message: string
+    tone: 'error' | 'info'
+  } | null>(null)
 
   const {
     register,
@@ -26,12 +29,15 @@ export function LoginPage() {
   })
 
   const onSubmit = handleSubmit(async (values) => {
-    setSubmitError('')
+    setSubmitError(null)
     try {
       await login(values)
       navigate('/', { replace: true })
     } catch (error) {
-      setSubmitError(getApiErrorMessage(error, 'E-mail ou senha inválidos.'))
+      setSubmitError({
+        message: getApiErrorMessage(error, 'E-mail ou senha inválidos.'),
+        tone: getApiErrorStatus(error) === 403 ? 'info' : 'error',
+      })
     }
   })
 
@@ -39,6 +45,7 @@ export function LoginPage() {
     <AuthLayout
       title="Entrar na sua conta"
       subtitle="Acesse seu painel financeiro."
+      note="O LocalFinance está em beta fechado. Algumas funções ainda podem mudar."
       footer={
         <>
           Não tem uma conta?{' '}
@@ -52,7 +59,9 @@ export function LoginPage() {
       }
     >
       <form onSubmit={onSubmit} noValidate>
-        {submitError && <FormAlert message={submitError} />}
+        {submitError && (
+          <FormAlert message={submitError.message} tone={submitError.tone} />
+        )}
 
         <TextField
           label="E-mail"

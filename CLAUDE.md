@@ -35,7 +35,7 @@ Não existe projeto de testes. Antes de entregar mudança no backend, rode `dotn
 - Repositórios expõem métodos específicos, nunca `IQueryable`.
 - Todo acesso a dados é LINQ. SQL cru só existe dentro de migrations e só com constantes do código;
   nunca interpole entrada de usuário em SQL.
-- No front, chamadas à API ficam em `features/finance/api.ts` e hooks em `features/finance/hooks.ts`.
+- No front, cada feature tem seu `api.ts` e `hooks.ts` (`features/finance`, `features/platform`).
   Toda mutation que falha precisa mostrar o erro ao usuário (`getApiErrorMessage` + toast); não deixe
   falha silenciosa.
 
@@ -68,6 +68,25 @@ Regras para não vazar dados entre contas:
   "De quem é", avatares, filtro e relatório por integrante. Use esse hook, não contagem de membros.
 - A navegação usa o campo `plan` de `navConfig.ts`: "Integrantes" no plano família, "Modo família"
   (página de ativação) no individual.
+
+## Aprovação de contas e Console
+
+- O sistema está em **beta fechado**: todo cadastro cria a família com `Household.Status = Pending`, sem
+  sessão. A pessoa vê "Cadastro recebido" e só entra depois de aprovada. Os status são `Pending`,
+  `Active` e `Suspended`; recusar apaga a família inteira (`HouseholdRepository.DeleteWithDataAsync`).
+- Quem aprova é o **desenvolvedor**: os e-mails de `Platform:DeveloperEmails` (user-secrets ou
+  `Platform__DeveloperEmails__0`). Eles recebem o papel `Developer` no token e veem o **Console**
+  (`/console`, rotas `api/platform/*`). Cadastro com e-mail de desenvolvedor já nasce ativo: só liste
+  e-mails que você controla.
+- O Console é o único lugar que atravessa o isolamento entre famílias, então mostra **só dados de conta**
+  (titular, e-mail, plano, status, número de integrantes) e números agregados. Nunca exponha lançamentos
+  ou valores ali.
+- **Cada requisição autenticada confere a sessão no banco** (`JwtBearerEvents.OnTokenValidated` →
+  `AuthService.IsSessionValidAsync`): usuário ativo, família ativa, mesma família e mesmo papel do
+  token. Suspender uma conta ou rebaixar alguém vale na hora. Login e refresh também recusam família
+  pendente ou suspensa (403 com a mensagem certa).
+- E-mails: aprovação e recusa avisam o titular (`AccessEmails`). Todos os e-mails usam
+  `EmailTemplate`; não copie HTML de e-mail.
 
 ## Integrantes e administradores
 
@@ -104,6 +123,34 @@ Regras para não vazar dados entre contas:
 - `20261111161047_Households.Down` lança `NotSupportedException` de propósito: desfazer juntaria os
   dados de todas as contas num espaço só. Volte por backup.
 
+## Interface: regras de UX e cor
+
+- **Paleta de identidade** (categorias e avatares): só estas 8 cores, validadas com o
+  `validate_palette.js` da skill `dataviz` contra os fundos claro (`#ffffff`) e escuro (`#121a18`):
+  `#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`, `#9085e9`, `#e66767`.
+  Não use a paleta padrão do Tailwind (índigo e violeta, rosa e vermelho ficam indistinguíveis).
+  Mudou a paleta? Rode o validador de novo nos dois modos.
+- **Gráficos**: receita e despesa usam `bg-chart-income`/`bg-chart-expense` (tokens com valor próprio
+  no tema escuro), não `--income`/`--expense`, que são cores de texto. Verde × vermelho fica na faixa
+  de alerta para daltonismo, então todo gráfico com os dois precisa de legenda e valores legíveis sem
+  hover (no celular não existe hover).
+- **Donut**: no máximo 6 fatias (as 5 maiores + "Outras" em cinza), com espaço entre fatias e legenda
+  igual às fatias.
+- Números grandes isolados sem `tabular-nums`; `tabular-nums` só onde números se alinham em coluna.
+- Textos: use `plural()` (nunca "lançamento(s)"); valores negativos com o sinal de menos `−`.
+- O cabeçalho do app já mostra o título da página: não repita o título num `h2` dentro dela.
+- Toda tela que carrega dados trata erro com `QueryError` ("Tentar de novo"), em vez de parecer vazia.
+- Celular (390px):
+  - Linha de lista é um botão que abre a edição; nada de ícones de ação espremendo o texto.
+  - Ação destrutiva fica dentro do formulário e sempre pede confirmação.
+  - Grupos de botões quebram de linha (`flex-wrap` + `ml-auto`), não vazam da tela.
+- Rótulos de conta dependem do plano: "Conta individual" no individual, "Família · Admin" ou
+  "Família · Membro" no família (`features/household/useAccount.ts`).
+- Para revisar visualmente, suba a API contra um Postgres descartável com dados de demonstração e
+  capture telas com `playwright-core` usando o Chrome instalado (`channel: 'chrome'`), em 390px e
+  1280px, nos dois temas. O limite global da API (150 req/min por IP) derruba capturas em sequência;
+  espaçe as rodadas.
+
 ## Front: armadilhas conhecidas
 
 - O cache do TanStack Query é limpo em login, cadastro e logout (`AuthContext`). Com `staleTime` de 5
@@ -121,36 +168,33 @@ Regras para não vazar dados entre contas:
 - Isolamento entre famílias conferido em todos os controllers; ID de outra família responde 404.
 - JWT HMAC-SHA256 com chave de no mínimo 32 bytes, emissor, audiência e validade conferidos.
 - Tokens de convite e de troca de senha: 256 bits, guardados como hash, uso único, com validade.
+- Toda requisição autenticada revalida usuário, família e papel no banco (`OnTokenValidated`).
 - Refresh tokens vencidos são apagados a cada emissão de sessão.
 
 ## Pendências conhecidas
 
 Pontos válidos dos reviews de código e de segurança de 2026-11-11 que ainda não foram resolvidos.
 
-1. **Access token de 24h sem revogação.** Papel e família ficam gravados no token; quem foi rebaixado,
-   desativado ou excluído mantém o acesso até ele expirar. O refresh já relê tudo do banco. Correção:
-   `JwtBearerEvents.OnTokenValidated` conferindo usuário ativo, família e papel no banco, ou token de
-   ~15 minutos.
-2. **Pré-sequestro por convite.** Qualquer admin pode cadastrar um e-mail que ainda não tem conta. O dono
+1. **Pré-sequestro por convite.** Qualquer admin pode cadastrar um e-mail que ainda não tem conta. O dono
    desse e-mail não consegue mais criar conta própria (409), e o "esqueci a senha" ativa a conta dentro
    da família de quem convidou. O convite não diz quem convidou. Correção: tabela de convites com aceite
    explícito, cadastro assume convite nunca aceito, e-mail e tela de senha com o nome de quem convidou.
-3. **Admin troca o e-mail de quem já tem senha** sem verificação, o que permite tomar a conta via
+2. **Admin troca o e-mail de quem já tem senha** sem verificação, o que permite tomar a conta via
    "esqueci a senha". Correção: bloquear ou exigir confirmação no e-mail novo.
-4. **Trocar o e-mail de um convite pendente não invalida o link já enviado** (vale 48h).
-5. **Definir ou redefinir senha não revoga os refresh tokens existentes**
+3. **Trocar o e-mail de um convite pendente não invalida o link já enviado** (vale 48h).
+4. **Definir ou redefinir senha não revoga os refresh tokens existentes**
    (`MemberInviteService.SetPasswordAsync`).
-6. **Enumeração de e-mail.** O 409 do cadastro e de criar/editar integrante revela se um e-mail tem conta.
+5. **Enumeração de e-mail.** O 409 do cadastro e de criar/editar integrante revela se um e-mail tem conta.
    Cadastro e criação têm limite de taxa; edição não.
-7. **Corrida na trava de último admin.** Dois admins rebaixando um ao outro ao mesmo tempo podem passar
+6. **Corrida na trava de último admin.** Dois admins rebaixando um ao outro ao mesmo tempo podem passar
    os dois pela checagem. Correção: transação serializável ou lock na família.
-8. **Isolamento feito à mão.** Depende de passar `householdId` em todo método. Alternativa mais robusta:
+7. **Isolamento feito à mão.** Depende de passar `householdId` em todo método. Alternativa mais robusta:
    `HasQueryFilter` global por família, com cuidado nos fluxos de autenticação.
-9. **Navegação depende de `GET /api/household`.** Enquanto carrega, ou se falhar, "Integrantes" e
+8. **Navegação depende de `GET /api/household`.** Enquanto carrega, ou se falhar, "Integrantes" e
    "Modo família" somem do menu. Alternativa: devolver o plano junto do usuário no login e no `/me`.
-10. **Proxy reverso.** `KnownProxies`/`KnownIPNetworks` são limpos, então um `X-Forwarded-For` forjado muda
+9. **Proxy reverso.** `KnownProxies`/`KnownIPNetworks` são limpos, então um `X-Forwarded-For` forjado muda
     a chave do limite de taxa. Em produção, configure o proxy conhecido.
-11. **Dependência vulnerável.** `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902/NU1903), transitiva via
+10. **Dependência vulnerável.** `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902/NU1903), transitiva via
     MailKit/MimeKit. Atualize quando sair versão corrigida ou fixe a versão no `.csproj`.
-12. **Sem testes automatizados.** O `backend/tests/` previsto no plano não existe; os cenários de
+11. **Sem testes automatizados.** O `backend/tests/` previsto no plano não existe; os cenários de
     isolamento foram testados à mão contra um Postgres descartável.

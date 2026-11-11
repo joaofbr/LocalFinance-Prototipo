@@ -11,6 +11,9 @@ public class UserRepository(AppDbContext db) : IUserRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
 
+    public Task<User?> GetWithHouseholdAsync(Guid id, CancellationToken ct = default) =>
+        db.Users.Include(u => u.Household).FirstOrDefaultAsync(u => u.Id == id, ct);
+
     public Task<User?> GetInHouseholdAsync(Guid householdId, Guid id, CancellationToken ct = default) =>
         db.Users.FirstOrDefaultAsync(u => u.Id == id && u.HouseholdId == householdId, ct);
 

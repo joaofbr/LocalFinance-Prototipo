@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/ToastProvider'
@@ -124,7 +125,7 @@ export function MembersPage() {
         setConfirmingDelete(null)
         showToast(
           getApiErrorMessage(error, 'Não foi possível excluir o integrante'),
-          'neutral',
+          'warning',
         )
       },
     })
@@ -133,22 +134,11 @@ export function MembersPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[18px] font-extrabold tracking-tight">
-              Integrantes
-            </h2>
-            <span className="flex items-center gap-1 rounded-full bg-primary-weak px-2 py-[3px] text-[11px] font-semibold text-primary">
-              <Icon name="shield" size={12} />
-              {isAdmin ? 'Somente Admin' : 'Somente leitura'}
-            </span>
-          </div>
-          <p className="mt-[3px] text-[13.5px] text-text-2">
-            {isAdmin
-              ? 'Gerencie quem tem acesso ao seu painel.'
-              : 'Veja quem tem acesso ao painel. Só o Admin pode fazer alterações.'}
-          </p>
-        </div>
+        <p className="text-[13.5px] text-text-2">
+          {isAdmin
+            ? 'Quem tem acesso ao seu painel.'
+            : 'Quem tem acesso ao painel. Só um administrador pode fazer alterações.'}
+        </p>
         {isAdmin && (
           <Button
             type="button"
@@ -175,7 +165,9 @@ export function MembersPage() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-        {membersQuery.isLoading ? (
+        {membersQuery.isError ? (
+          <QueryError onRetry={() => void membersQuery.refetch()} />
+        ) : membersQuery.isLoading ? (
           <div className="flex flex-col gap-3 p-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton key={index} height={56} />
@@ -284,85 +276,84 @@ function MemberRow({
   canDelete,
   resending,
 }: MemberRowProps) {
+  const pending = member.passwordPending && member.active
   return (
-    <div className="flex items-center gap-3.5 border-b border-border px-4 py-3.5 last:border-b-0">
-      <Avatar
-        name={member.name}
-        color={member.color}
-        size={46}
-        muted={!member.active}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[14.5px] font-semibold">
-          {member.name}
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3 border-b border-border px-4 py-3.5 last:border-b-0">
+      <div className="flex min-w-0 flex-1 basis-[220px] items-center gap-3.5">
+        <Avatar
+          name={member.name}
+          color={member.color}
+          size={44}
+          muted={!member.active}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-[14.5px] font-semibold">
+              {member.name}
+            </span>
+            {pending && (
+              <span
+                className="flex-shrink-0 rounded-full bg-neutral-bg px-2 py-[2px] text-[11px] font-semibold text-neutral"
+                title="Ainda não definiu a senha pelo e-mail de convite"
+              >
+                Convite pendente
+              </span>
+            )}
+            {!member.active && (
+              <span className="flex-shrink-0 rounded-full bg-neutral-bg px-2 py-[2px] text-[11px] font-semibold text-text-3">
+                Inativo
+              </span>
+            )}
+          </div>
+          <div className="truncate text-[12.5px] text-text-3">
+            {member.role === 'Admin' ? 'Administrador' : 'Membro'} · {member.email}
+          </div>
         </div>
-        <div className="truncate text-[12.5px] text-text-3">{member.email}</div>
       </div>
-      <span
-        className={`hidden rounded-full px-2 py-[3px] text-[11px] font-semibold sm:inline-flex ${
-          member.role === 'Admin'
-            ? 'bg-primary-weak text-primary'
-            : 'bg-neutral-bg text-neutral'
-        }`}
-      >
-        {member.role === 'Admin' ? 'Admin' : 'Membro'}
-      </span>
-      {member.passwordPending && (
-        <span
-          className="hidden rounded-full bg-expense-bg px-2 py-[3px] text-[11px] font-semibold text-expense sm:inline-flex"
-          title="Ainda não definiu a senha pelo e-mail de convite"
-        >
-          Convite pendente
-        </span>
-      )}
-      <span
-        className={`rounded-full px-2 py-[3px] text-[11px] font-semibold ${
-          member.active ? 'bg-income-bg text-income' : 'bg-neutral-bg text-text-3'
-        }`}
-      >
-        {member.active ? 'Ativo' : 'Inativo'}
-      </span>
-      {canManage && member.passwordPending && member.active && (
-        <button
-          type="button"
-          onClick={onResend}
-          disabled={resending}
-          title="Reenviar convite por e-mail"
-          className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2 disabled:opacity-60"
-        >
-          {resending ? 'Enviando...' : 'Reenviar convite'}
-        </button>
-      )}
+
       {canManage && (
-        <button
-          type="button"
-          onClick={onEdit}
-          title="Editar"
-          aria-label={`Editar ${member.name}`}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
-        >
-          <Icon name="pencil" size={16} />
-        </button>
-      )}
-      {canToggle && (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
-        >
-          {member.active ? 'Desativar' : 'Reativar'}
-        </button>
-      )}
-      {canDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          title="Excluir integrante"
-          aria-label={`Excluir ${member.name}`}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-3 hover:border-expense hover:bg-expense-bg hover:text-expense"
-        >
-          <Icon name="trash" size={16} />
-        </button>
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2">
+          {pending && (
+            <button
+              type="button"
+              onClick={onResend}
+              disabled={resending}
+              title="Reenviar convite por e-mail"
+              className="whitespace-nowrap rounded-[10px] border border-border-strong px-3 py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2 disabled:opacity-60"
+            >
+              {resending ? 'Enviando...' : 'Reenviar convite'}
+            </button>
+          )}
+          {canToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="whitespace-nowrap rounded-[10px] border border-border-strong px-3 py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2"
+            >
+              {member.active ? 'Desativar' : 'Reativar'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onEdit}
+            title="Editar"
+            aria-label={`Editar ${member.name}`}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
+          >
+            <Icon name="pencil" size={16} />
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              title="Excluir integrante"
+              aria-label={`Excluir ${member.name}`}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-3 hover:border-expense hover:bg-expense-bg hover:text-expense"
+            >
+              <Icon name="trash" size={16} />
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

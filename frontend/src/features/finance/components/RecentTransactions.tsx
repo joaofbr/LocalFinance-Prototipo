@@ -70,7 +70,7 @@ export function RecentTransactions({
                     isIncome ? 'text-income' : 'text-expense'
                   }`}
                 >
-                  {isIncome ? '+ ' : '- '}
+                  {isIncome ? '+ ' : '− '}
                   {formatMoney(total)}
                 </span>
               </div>

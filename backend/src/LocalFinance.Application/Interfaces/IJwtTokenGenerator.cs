@@ -4,5 +4,5 @@ namespace LocalFinance.Application.Interfaces;
 
 public interface IJwtTokenGenerator
 {
-    (string Token, DateTime ExpiresAt) Generate(User user);
+    (string Token, DateTime ExpiresAt) Generate(User user, bool developer);
 }

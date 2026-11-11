@@ -49,6 +49,13 @@ public static class EnumMapping
         _ => throw new ValidationException("Plano inválido."),
     };
 
+    public static string ToDto(this HouseholdStatus status) => status switch
+    {
+        HouseholdStatus.Pending => "pending",
+        HouseholdStatus.Suspended => "suspended",
+        _ => "active",
+    };
+
     public static string ToDto(this UserRole role) =>
         role == UserRole.Admin ? "Admin" : "Member";
 

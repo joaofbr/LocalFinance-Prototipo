@@ -20,6 +20,7 @@ interface TransactionFormSheetProps {
   currentUserId: string
   saving: boolean
   onClose: () => void
+  onDelete?: () => void
   onSubmit: (input: TransactionInput) => void
 }
 
@@ -36,6 +37,7 @@ export function TransactionFormSheet({
   currentUserId,
   saving,
   onClose,
+  onDelete,
   onSubmit,
 }: TransactionFormSheetProps) {
   const original = editing?.transaction
@@ -134,7 +136,7 @@ export function TransactionFormSheet({
           </button>
         </div>
 
-        <div className="px-5 pb-6 pt-[18px]">
+        <div className="px-5 pb-5 pt-[18px]">
           <div className="mb-5 flex gap-2.5">
             <TypeButton
               label="Receita"
@@ -325,37 +327,52 @@ export function TransactionFormSheet({
             </div>
           )}
 
-          <label className="mb-1.5 mt-4 block text-[13px] font-semibold text-text-2">
+          <label
+            htmlFor="description"
+            className="mb-1.5 mt-4 block text-[13px] font-semibold text-text-2"
+          >
             Descrição
           </label>
           <input
+            id="description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Ex: Supermercado do mês"
-            className="mb-[22px] w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-3 text-[14.5px] text-text outline-none focus:border-primary"
+            className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-3 text-[14.5px] text-text outline-none focus:border-primary"
           />
+        </div>
 
-          <div className="flex gap-2.5">
+        <div className="sticky bottom-0 z-[2] flex gap-2.5 border-t border-border bg-surface px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3.5">
+          {onDelete && (
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl border border-border-strong py-3.5 text-[14.5px] font-semibold text-text"
+              onClick={onDelete}
+              aria-label="Excluir lançamento"
+              title="Excluir lançamento"
+              className="flex w-[50px] flex-shrink-0 items-center justify-center rounded-xl border border-border-strong text-expense hover:bg-expense-bg"
             >
-              Cancelar
+              <Icon name="trash" size={18} />
             </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={saving}
-              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14.5px] font-bold text-primary-fg shadow-card-md disabled:opacity-60"
-            >
-              {saving && (
-                <span className="inline-block h-[18px] w-[18px] animate-spin rounded-full border-[2.5px] border-white/35 border-t-white" />
-              )}
-              Salvar lançamento
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-border-strong py-3.5 text-[14.5px] font-semibold text-text"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14.5px] font-bold text-primary-fg shadow-card-md disabled:opacity-60"
+          >
+            {saving && (
+              <span className="inline-block h-[18px] w-[18px] animate-spin rounded-full border-[2.5px] border-white/35 border-t-white" />
+            )}
+            Salvar
+          </button>
         </div>
       </div>
     </div>
