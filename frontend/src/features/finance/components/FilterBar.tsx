@@ -8,6 +8,7 @@ interface FilterBarProps {
   onChange: (filters: TransactionFilters) => void
   categories: Category[]
   members: Member[]
+  showMembers: boolean
 }
 
 const selectClass =
@@ -18,6 +19,7 @@ export function FilterBar({
   onChange,
   categories,
   members,
+  showMembers,
 }: FilterBarProps) {
   const isActive =
     filters.type !== 'all' ||
@@ -56,18 +58,20 @@ export function FilterBar({
         ))}
       </select>
 
-      <select
-        value={filters.memberId}
-        onChange={(e) => onChange({ ...filters, memberId: e.target.value })}
-        className={selectClass}
-      >
-        <option value="all">Todos os integrantes</option>
-        {members.map((member) => (
-          <option key={member.id} value={member.id}>
-            {member.name}
-          </option>
-        ))}
-      </select>
+      {showMembers && (
+        <select
+          value={filters.memberId}
+          onChange={(e) => onChange({ ...filters, memberId: e.target.value })}
+          className={selectClass}
+        >
+          <option value="all">Todos os integrantes</option>
+          {members.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {isActive && (
         <button

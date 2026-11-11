@@ -40,6 +40,24 @@ export function formatDateShort(iso: string): string {
   return `${dd}/${mm}`
 }
 
+function toIsoDate(date: Date): string {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+export function defaultDateInPeriod(year: number, month: number): string {
+  const today = new Date()
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  return toIsoDate(new Date(year, month, Math.min(today.getDate(), lastDay)))
+}
+
+export function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`
+}
+
 export function getInitials(name: string): string {
   return name
     .split(' ')

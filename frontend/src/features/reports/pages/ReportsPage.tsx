@@ -6,6 +6,7 @@ import { MonthSelector } from '@/features/finance/components/MonthSelector'
 import { usePeriod } from '@/features/finance/PeriodContext'
 import {
   useCategories,
+  useHasFamily,
   useMembers,
   useMonthlyTransactions,
   useMonthlyTrend,
@@ -41,6 +42,8 @@ export function ReportsPage() {
     trendQuery.isLoading
 
   const transactions = transactionsQuery.data ?? []
+  const hasFamily = useHasFamily()
+  const tabs = TABS.filter((option) => hasFamily || option.value !== 'member')
   const summary = getMonthlySummary(transactions)
   const categoryReport = getCategoryReport(
     transactions,
@@ -55,7 +58,7 @@ export function ReportsPage() {
       </div>
 
       <div className="mb-4 flex max-w-[480px] gap-1 rounded-[13px] bg-surface-2 p-[5px]">
-        {TABS.map((option) => (
+        {tabs.map((option) => (
           <button
             key={option.value}
             type="button"

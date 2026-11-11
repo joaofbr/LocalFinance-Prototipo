@@ -2,11 +2,16 @@ import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/features/auth/useAuth'
-import { MORE_NAV_ITEMS } from '@/components/layout/navConfig'
+import { useHousehold } from '@/features/finance/hooks'
+import {
+  MORE_NAV_ITEMS,
+  visibleNavItems,
+} from '@/components/layout/navConfig'
 
 export function MorePage() {
   const { user, logout } = useAuth()
   const isAdmin = user?.role !== 'Member'
+  const plan = useHousehold().data?.plan
 
   return (
     <div className="max-w-[560px]">
@@ -27,7 +32,7 @@ export function MorePage() {
       </div>
 
       <nav className="mb-4 overflow-hidden rounded-[20px] border border-border bg-surface shadow-card">
-        {MORE_NAV_ITEMS.map((item) => (
+        {visibleNavItems(MORE_NAV_ITEMS, { isAdmin, plan }).map((item) => (
           <Link
             key={item.to}
             to={item.to}

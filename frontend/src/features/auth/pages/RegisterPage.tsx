@@ -44,7 +44,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Criar sua conta"
-      subtitle="Comece a organizar as finanças da família."
+      subtitle="Comece a organizar suas finanças. Se quiser, convide a família depois."
       footer={
         <>
           Já tem uma conta?{' '}

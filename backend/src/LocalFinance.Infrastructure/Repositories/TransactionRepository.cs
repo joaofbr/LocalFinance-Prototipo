@@ -9,15 +9,16 @@ namespace LocalFinance.Infrastructure.Repositories;
 
 public class TransactionRepository(AppDbContext db) : ITransactionRepository
 {
-    public Task<Transaction?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        db.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct);
+    public Task<Transaction?> GetByIdAsync(Guid householdId, Guid id, CancellationToken ct = default) =>
+        db.Transactions.FirstOrDefaultAsync(t => t.Id == id && t.HouseholdId == householdId, ct);
 
-    public Task<List<Transaction>> ListByMonthAsync(int year, int month, CancellationToken ct = default)
+    public Task<List<Transaction>> ListByMonthAsync(
+        Guid householdId, int year, int month, CancellationToken ct = default)
     {
         var from = new DateOnly(year, month, 1);
         var to = from.AddMonths(1);
         return db.Transactions
-            .Where(t => t.Date >= from && t.Date < to)
+            .Where(t => t.HouseholdId == householdId && t.Date >= from && t.Date < to)
             .OrderByDescending(t => t.Date)
             .ThenByDescending(t => t.CreatedAt)
             .ToListAsync(ct);
@@ -26,9 +27,11 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
     public Task<int> CountByUserAsync(Guid userId, CancellationToken ct = default) =>
         db.Transactions.CountAsync(t => t.UserId == userId, ct);
 
-    public async Task<Dictionary<Guid, int>> CountByCategoryAsync(CancellationToken ct = default)
+    public async Task<Dictionary<Guid, int>> CountByCategoryAsync(
+        Guid householdId, CancellationToken ct = default)
     {
         var counts = await db.Transactions
+            .Where(t => t.HouseholdId == householdId)
             .GroupBy(t => t.CategoryId)
             .Select(g => new { g.Key, Count = g.Count() })
             .ToListAsync(ct);
@@ -36,12 +39,13 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
     }
 
     public async Task<List<MonthlyTotal>> GetMonthlyTotalsAsync(
+        Guid householdId,
         DateOnly from,
         DateOnly to,
         CancellationToken ct = default)
     {
         var totals = await db.Transactions
-            .Where(t => t.Date >= from && t.Date <= to)
+            .Where(t => t.HouseholdId == householdId && t.Date >= from && t.Date <= to)
             .GroupBy(t => new { t.Date.Year, t.Date.Month })
             .Select(g => new
             {
@@ -56,9 +60,10 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
             .ToList();
     }
 
-    public Task<List<Transaction>> ListBySeriesAsync(Guid seriesId, CancellationToken ct = default) =>
+    public Task<List<Transaction>> ListBySeriesAsync(
+        Guid householdId, Guid seriesId, CancellationToken ct = default) =>
         db.Transactions
-            .Where(t => t.SeriesId == seriesId)
+            .Where(t => t.HouseholdId == householdId && t.SeriesId == seriesId)
             .OrderBy(t => t.SeriesIndex)
             .ToListAsync(ct);
 

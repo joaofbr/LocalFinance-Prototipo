@@ -65,6 +65,7 @@ src/
 │   ├── categories/  # página e modal de categorias
 │   ├── dashboard/   # página do dashboard
 │   ├── finance/     # estado compartilhado: período, sheet de transação, api, seletores
+│   ├── household/   # página do modo família (ativação do plano)
 │   ├── members/     # página e modal de integrantes
 │   ├── reports/     # página de relatórios
 │   └── transactions/# página de transações

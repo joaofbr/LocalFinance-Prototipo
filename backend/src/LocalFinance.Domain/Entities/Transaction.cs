@@ -5,6 +5,7 @@ namespace LocalFinance.Domain.Entities;
 public class Transaction
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid HouseholdId { get; set; }
     public TransactionType Type { get; set; } = TransactionType.Expense;
     public decimal Amount { get; set; }
     public DateOnly Date { get; set; }

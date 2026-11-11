@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/api/auth'
 import { setUnauthorizedHandler } from '@/api/client'
 import { isUnauthorizedError } from '@/lib/apiError'
@@ -28,6 +29,7 @@ export const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('initializing')
   const [user, setUser] = useState<User | null>(null)
+  const queryClient = useQueryClient()
 
   const logout = useCallback(() => {
     const refreshToken = tokenStorage.getCachedRefresh()
@@ -35,9 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void authApi.logout(refreshToken).catch(() => undefined)
     }
     void tokenStorage.clear()
+    queryClient.clear()
     setUser(null)
     setStatus('unauthenticated')
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
     setUnauthorizedHandler(logout)
@@ -67,19 +70,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [logout])
 
-  const login = useCallback(async (payload: LoginRequest) => {
-    const result = await authApi.login(payload)
-    await tokenStorage.set(result.token, result.refreshToken)
-    setUser(result.user)
-    setStatus('authenticated')
-  }, [])
+  const login = useCallback(
+    async (payload: LoginRequest) => {
+      const result = await authApi.login(payload)
+      await tokenStorage.set(result.token, result.refreshToken)
+      queryClient.clear()
+      setUser(result.user)
+      setStatus('authenticated')
+    },
+    [queryClient],
+  )
 
-  const register = useCallback(async (payload: RegisterRequest) => {
-    const result = await authApi.register(payload)
-    await tokenStorage.set(result.token, result.refreshToken)
-    setUser(result.user)
-    setStatus('authenticated')
-  }, [])
+  const register = useCallback(
+    async (payload: RegisterRequest) => {
+      const result = await authApi.register(payload)
+      await tokenStorage.set(result.token, result.refreshToken)
+      queryClient.clear()
+      setUser(result.user)
+      setStatus('authenticated')
+    },
+    [queryClient],
+  )
 
   const value = useMemo<AuthContextValue>(
     () => ({ status, user, login, register, logout }),

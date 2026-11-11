@@ -8,6 +8,7 @@ namespace LocalFinance.Application.Services;
 public class ReportService(ITransactionRepository transactions) : IReportService
 {
     public async Task<List<MonthlyTrendPointDto>> GetMonthlyTrendAsync(
+        Guid householdId,
         int year,
         int month,
         int months,
@@ -22,7 +23,7 @@ public class ReportService(ITransactionRepository transactions) : IReportService
         var last = new DateOnly(year, month, 1);
         var first = last.AddMonths(-(months - 1));
         var to = last.AddMonths(1).AddDays(-1);
-        var totals = await transactions.GetMonthlyTotalsAsync(first, to, ct);
+        var totals = await transactions.GetMonthlyTotalsAsync(householdId, first, to, ct);
         var byBucket = totals.ToDictionary(t => (t.Year, t.Month));
 
         var points = new List<MonthlyTrendPointDto>(months);

@@ -1,7 +1,7 @@
 # LocalFinance
 
-Controle financeiro familiar: React + TypeScript no front, ASP.NET Core (.NET 10)
-com EF Core e PostgreSQL no back, autenticação por JWT.
+Controle financeiro pessoal ou familiar: React + TypeScript no front, ASP.NET Core
+(.NET 10) com EF Core e PostgreSQL no back, autenticação por JWT.
 
 O plano completo (escopo, modelo de dados, épicos) está em [docs/PLANO.md](docs/PLANO.md).
 
@@ -56,8 +56,8 @@ cd backend/src/LocalFinance.Api && dotnet run
 Sobe em `http://localhost:5063`, com Swagger em `http://localhost:5063/swagger`.
 
 O startup aplica as migrations em qualquer ambiente, sem precisar rodar
-`dotnet ef database update` na mão. As 11 categorias padrão entram pelo seed da
-migration inicial.
+`dotnet ef database update` na mão. As 11 categorias padrão são criadas para cada
+conta nova no momento do cadastro.
 
 A connection string padrão aponta para `localhost:5432`, banco `localfinance`,
 usuário `postgres`. Para usar outro servidor (o Neon, por exemplo), sobrescreva
@@ -77,8 +77,19 @@ Sobe em `http://localhost:5173`, origem já liberada no CORS da API.
 
 ### 4. Primeiro acesso
 
-Não há usuário semeado: crie o seu em **Criar conta**. A primeira conta cadastrada
-vira **Admin** da família, e é ela que enxerga a tela de Integrantes.
+Não há usuário semeado: crie o seu em **Criar conta**. Cada cadastro abre um
+espaço próprio e isolado, com suas categorias e lançamentos, e quem se cadastra é o
+**Admin** dele. Toda conta nasce no **modo individual**: só o dono usa, e as
+opções de integrante não aparecem.
+
+Para usar em família, o Admin ativa o **Modo família** pelo menu (é o ponto onde
+entrará a cobrança do plano família). A tela de **Integrantes** passa a aparecer, e
+as pessoas cadastradas nela entram no mesmo espaço e veem os mesmos lançamentos. A
+API recusa cadastrar ou reativar integrante fora do modo família, e só permite
+voltar ao individual quando não há outros integrantes ativos. Criar conta pela tela de
+cadastro sempre abre um espaço novo, nunca entra num existente. Como o e-mail é
+único no sistema, quem já tem conta própria não pode ser convidado para outro
+espaço com o mesmo e-mail.
 
 Os integrantes que o Admin cadastrar **não recebem senha**. Eles recebem um e-mail
 com um link para definir a própria senha (`/definir-senha?token=...`). O link vale

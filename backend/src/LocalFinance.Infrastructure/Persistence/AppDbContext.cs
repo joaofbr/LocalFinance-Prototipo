@@ -5,6 +5,7 @@ namespace LocalFinance.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<Household> Households => Set<Household>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
@@ -13,6 +14,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Household>(entity =>
+        {
+            entity.Property(h => h.Plan).HasConversion<string>().HasMaxLength(12);
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.Property(u => u.Name).HasMaxLength(120);
@@ -21,6 +27,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(u => u.PasswordHash).HasMaxLength(300);
             entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(10);
             entity.Property(u => u.Color).HasMaxLength(9);
+            entity.HasOne(u => u.Household)
+                .WithMany()
+                .HasForeignKey(u => u.HouseholdId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -29,7 +39,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(c => c.Kind).HasConversion<string>().HasMaxLength(10);
             entity.Property(c => c.Color).HasMaxLength(9);
             entity.Property(c => c.Icon).HasMaxLength(40);
-            entity.HasData(DefaultCategories.All);
+            entity.HasOne<Household>()
+                .WithMany()
+                .HasForeignKey(c => c.HouseholdId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PasswordSetupToken>(entity =>
@@ -57,8 +70,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(10);
             entity.Property(t => t.Amount).HasPrecision(18, 2);
             entity.Property(t => t.Description).HasMaxLength(200);
-            entity.HasIndex(t => t.Date);
+            entity.HasIndex(t => new { t.HouseholdId, t.Date });
             entity.HasIndex(t => t.SeriesId);
+            entity.HasOne<Household>()
+                .WithMany()
+                .HasForeignKey(t => t.HouseholdId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.Property(t => t.SeriesKind).HasConversion<string>().HasMaxLength(12);
             entity.HasOne(t => t.Category)
                 .WithMany()

@@ -6,14 +6,15 @@ interface SeriesBadgeProps {
     Transaction,
     'seriesKind' | 'seriesIndex' | 'seriesTotal' | 'splitTotal'
   >
+  showShared?: boolean
 }
 
 const PILL =
   'flex flex-shrink-0 items-center gap-0.5 rounded-full bg-surface-2 px-1.5 py-[1px] text-[10.5px] font-bold text-text-2'
 
-export function SeriesBadge({ transaction }: SeriesBadgeProps) {
+export function SeriesBadge({ transaction, showShared = true }: SeriesBadgeProps) {
   const { seriesKind, seriesIndex, seriesTotal, splitTotal } = transaction
-  const shared = (splitTotal ?? 0) > 1
+  const shared = showShared && (splitTotal ?? 0) > 1
   const repeated = Boolean(seriesKind && seriesIndex && seriesTotal)
 
   if (!shared && !repeated) return null

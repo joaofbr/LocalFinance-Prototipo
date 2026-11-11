@@ -10,6 +10,7 @@ import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage'
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
 import { MembersPage } from '@/features/members/pages/MembersPage'
+import { FamilyModePage } from '@/features/household/pages/FamilyModePage'
 import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
 import { MorePage } from '@/features/more/pages/MorePage'
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/members" element={<MembersPage />} />
+          <Route path="/modo-familia" element={<FamilyModePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/mais" element={<MorePage />} />
         </Route>

@@ -36,6 +36,9 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                         .HasMaxLength(9)
                         .HasColumnType("character varying(9)");
 
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -53,108 +56,28 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.HasIndex("HouseholdId");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000001"),
-                            Active = true,
-                            Color = "#f59e0b",
-                            Icon = "cart",
-                            Kind = "Expense",
-                            Name = "Mercado"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000002"),
-                            Active = true,
-                            Color = "#6366f1",
-                            Icon = "home",
-                            Kind = "Expense",
-                            Name = "Moradia"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000003"),
-                            Active = true,
-                            Color = "#0ea5e9",
-                            Icon = "car",
-                            Kind = "Expense",
-                            Name = "Transporte"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000004"),
-                            Active = true,
-                            Color = "#f97316",
-                            Icon = "utensils",
-                            Kind = "Expense",
-                            Name = "Alimentação"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000005"),
-                            Active = true,
-                            Color = "#f43f5e",
-                            Icon = "heart",
-                            Kind = "Expense",
-                            Name = "Saúde"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000006"),
-                            Active = true,
-                            Color = "#8b5cf6",
-                            Icon = "cap",
-                            Kind = "Expense",
-                            Name = "Educação"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000007"),
-                            Active = true,
-                            Color = "#ec4899",
-                            Icon = "film",
-                            Kind = "Expense",
-                            Name = "Lazer"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000008"),
-                            Active = true,
-                            Color = "#14b8a6",
-                            Icon = "zap",
-                            Kind = "Expense",
-                            Name = "Contas & Serviços"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-000000000009"),
-                            Active = true,
-                            Color = "#059669",
-                            Icon = "wallet",
-                            Kind = "Income",
-                            Name = "Salário"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-00000000000a"),
-                            Active = true,
-                            Color = "#22c55e",
-                            Icon = "laptop",
-                            Kind = "Income",
-                            Name = "Renda extra"
-                        },
-                        new
-                        {
-                            Id = new Guid("a1000000-0000-0000-0000-00000000000b"),
-                            Active = true,
-                            Color = "#84cc16",
-                            Icon = "trendingUp",
-                            Kind = "Both",
-                            Name = "Investimentos"
-                        });
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("LocalFinance.Domain.Entities.Household", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Households");
                 });
 
             modelBuilder.Entity("LocalFinance.Domain.Entities.PasswordSetupToken", b =>
@@ -247,6 +170,9 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("SeriesId")
                         .HasColumnType("uuid");
 
@@ -275,11 +201,11 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("Date");
-
                     b.HasIndex("SeriesId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("HouseholdId", "Date");
 
                     b.ToTable("Transactions");
                 });
@@ -306,6 +232,9 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                         .HasMaxLength(180)
                         .HasColumnType("character varying(180)");
 
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -326,7 +255,18 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("HouseholdId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("LocalFinance.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("LocalFinance.Domain.Entities.Household", null)
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LocalFinance.Domain.Entities.PasswordSetupToken", b =>
@@ -359,6 +299,12 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("LocalFinance.Domain.Entities.Household", null)
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("LocalFinance.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -368,6 +314,17 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LocalFinance.Domain.Entities.User", b =>
+                {
+                    b.HasOne("LocalFinance.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Household");
                 });
 #pragma warning restore 612, 618
         }

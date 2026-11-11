@@ -2,25 +2,32 @@ import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/features/auth/useAuth'
+import { defaultDateInPeriod } from '@/lib/format'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
 import { SeriesScopeDialog } from './components/SeriesScopeDialog'
+import { usePeriod } from './PeriodContext'
 import {
   useCategories,
   useCreateTransaction,
+  useHasFamily,
   useMembers,
   useUpdateTransaction,
 } from './hooks'
-import type { Transaction, TransactionInput, TransactionScope } from './types'
+import type { TransactionEntry } from './transactionEntries'
+import type { TransactionInput, TransactionScope } from './types'
 
 interface TransactionSheetContextValue {
   openNew: () => void
-  openEdit: (transaction: Transaction) => void
+  openEdit: (entry: TransactionEntry) => void
 }
 
 const TransactionSheetContext =
   createContext<TransactionSheetContextValue | null>(null)
 
-type SheetState = { mode: 'closed' } | { mode: 'new' } | { mode: 'edit'; transaction: Transaction }
+type SheetState =
+  | { mode: 'closed' }
+  | { mode: 'new' }
+  | { mode: 'edit'; entry: TransactionEntry }
 
 export function TransactionSheetProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SheetState>({ mode: 'closed' })
@@ -30,8 +37,10 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
   } | null>(null)
   const { showToast } = useToast()
   const { user } = useAuth()
+  const { year, month } = usePeriod()
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
+  const hasFamily = useHasFamily()
   const createMutation = useCreateTransaction()
   const updateMutation = useUpdateTransaction()
 
@@ -40,7 +49,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
     setState({ mode: 'closed' })
   }
 
-  const editing = state.mode === 'edit' ? state.transaction : null
+  const editing = state.mode === 'edit' ? state.entry : null
   const saving = createMutation.isPending || updateMutation.isPending
 
   const applyEdit = (
@@ -65,17 +74,19 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
     <TransactionSheetContext.Provider
       value={{
         openNew: () => setState({ mode: 'new' }),
-        openEdit: (transaction) => setState({ mode: 'edit', transaction }),
+        openEdit: (entry) => setState({ mode: 'edit', entry }),
       }}
     >
       {children}
 
       {state.mode !== 'closed' && (
         <TransactionFormSheet
-          key={editing?.id ?? 'new'}
+          key={editing?.key ?? 'new'}
           editing={editing}
+          defaultDate={defaultDateInPeriod(year, month)}
           categories={categoriesQuery.data ?? []}
           members={membersQuery.data ?? []}
+          hasFamily={hasFamily}
           currentUserId={user?.id ?? ''}
           saving={saving}
           onClose={close}
@@ -89,18 +100,19 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
               })
               return
             }
-            if ((editing.seriesTotal ?? 1) > 1) {
-              setPendingEdit({ id: editing.id, input })
+            const { transaction } = editing
+            if ((transaction.seriesTotal ?? 1) > 1) {
+              setPendingEdit({ id: transaction.id, input })
               return
             }
-            applyEdit(editing.id, input, 'one')
+            applyEdit(transaction.id, input, 'one')
           }}
         />
       )}
 
       {pendingEdit && editing && (
         <SeriesScopeDialog
-          transaction={editing}
+          transaction={editing.transaction}
           action="edit"
           busy={updateMutation.isPending}
           onChoose={(scope) =>

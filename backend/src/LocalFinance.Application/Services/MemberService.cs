@@ -12,26 +12,31 @@ public class MemberService(
     IUserRepository users,
     ITransactionRepository transactions,
     IMemberInviteService invites,
+    IHouseholdService households,
     ILogger<MemberService> logger) : IMemberService
 {
+    private const string EmailInUse = "Este e-mail já está em uso por outra conta.";
 
-    public async Task<List<MemberDto>> ListAsync(CancellationToken ct = default)
+    public async Task<List<MemberDto>> ListAsync(Guid householdId, CancellationToken ct = default)
     {
-        var list = await users.ListAsync(ct);
+        var list = await users.ListAsync(householdId, ct);
         return list.Select(user => ToDto(user)).ToList();
     }
 
-    public async Task<MemberDto> CreateAsync(MemberInput input, CancellationToken ct = default)
+    public async Task<MemberDto> CreateAsync(
+        Guid householdId, MemberInput input, CancellationToken ct = default)
     {
         var email = Validate(input);
+        await households.EnsureFamilyPlanAsync(householdId, ct);
         if (await users.GetByEmailAsync(email, ct) is not null)
         {
-            throw new ConflictException("Já existe um integrante com este e-mail.");
+            throw new ConflictException(EmailInUse);
         }
 
-        var count = await users.CountAsync(ct);
+        var count = await users.CountAsync(householdId, ct);
         var user = new User
         {
+            HouseholdId = householdId,
             Name = input.Name.Trim(),
             Email = email,
             PasswordHash = string.Empty,
@@ -57,9 +62,10 @@ public class MemberService(
         return ToDto(user, inviteSent);
     }
 
-    public async Task DeleteAsync(Guid id, Guid requestedBy, CancellationToken ct = default)
+    public async Task DeleteAsync(
+        Guid householdId, Guid id, Guid requestedBy, CancellationToken ct = default)
     {
-        var user = await GetOrThrowAsync(id, ct);
+        var user = await GetOrThrowAsync(householdId, id, ct);
 
         if (user.Id == requestedBy)
         {
@@ -67,11 +73,7 @@ public class MemberService(
                 "Você não pode excluir a própria conta. Peça a outro administrador.");
         }
 
-        if (user.Role == UserRole.Admin && await users.CountAdminsAsync(ct) <= 1)
-        {
-            throw new ValidationException(
-                "Este é o único administrador da família. Promova outro integrante antes de excluir.");
-        }
+        await EnsureAnotherAdminAsync(user, householdId, ct);
 
         var lancamentos = await transactions.CountByUserAsync(user.Id, ct);
         if (lancamentos > 0)
@@ -85,9 +87,9 @@ public class MemberService(
         await users.SaveChangesAsync(ct);
     }
 
-    public async Task ResendInviteAsync(Guid id, CancellationToken ct = default)
+    public async Task ResendInviteAsync(Guid householdId, Guid id, CancellationToken ct = default)
     {
-        var user = await GetOrThrowAsync(id, ct);
+        var user = await GetOrThrowAsync(householdId, id, ct);
         if (!user.Active)
         {
             throw new ValidationException(
@@ -96,32 +98,71 @@ public class MemberService(
         await invites.SendInviteAsync(user, ct);
     }
 
-    public async Task<MemberDto> UpdateAsync(Guid id, MemberInput input, CancellationToken ct = default)
+    public async Task<MemberDto> UpdateAsync(
+        Guid householdId, Guid id, MemberInput input, Guid requestedBy, CancellationToken ct = default)
     {
         var email = Validate(input);
-        var user = await GetOrThrowAsync(id, ct);
+        var user = await GetOrThrowAsync(householdId, id, ct);
         var existing = await users.GetByEmailAsync(email, ct);
         if (existing is not null && existing.Id != id)
         {
-            throw new ConflictException("Já existe um integrante com este e-mail.");
+            throw new ConflictException(EmailInUse);
         }
+
+        var role = EnumMapping.ParseUserRole(input.Role);
+        if (role != user.Role && user.Id == requestedBy)
+        {
+            throw new ValidationException(
+                "Você não pode alterar o próprio papel. Peça a outro administrador.");
+        }
+        if (role != UserRole.Admin)
+        {
+            await EnsureAnotherAdminAsync(user, householdId, ct);
+        }
+
         user.Name = input.Name.Trim();
         user.Email = email;
-        user.Role = EnumMapping.ParseUserRole(input.Role);
+        user.Role = role;
         await users.SaveChangesAsync(ct);
         return ToDto(user);
     }
 
-    public async Task<MemberDto> SetActiveAsync(Guid id, bool active, CancellationToken ct = default)
+    public async Task<MemberDto> SetActiveAsync(
+        Guid householdId, Guid id, bool active, Guid requestedBy, CancellationToken ct = default)
     {
-        var user = await GetOrThrowAsync(id, ct);
+        var user = await GetOrThrowAsync(householdId, id, ct);
+        if (user.Id == requestedBy)
+        {
+            throw new ValidationException("Você não pode alterar o status da própria conta.");
+        }
+        if (active && !user.Active)
+        {
+            await households.EnsureFamilyPlanAsync(householdId, ct);
+        }
+        if (!active)
+        {
+            await EnsureAnotherAdminAsync(user, householdId, ct);
+        }
+
         user.Active = active;
         await users.SaveChangesAsync(ct);
         return ToDto(user);
     }
 
-    private async Task<User> GetOrThrowAsync(Guid id, CancellationToken ct) =>
-        await users.GetByIdAsync(id, ct)
+    private async Task EnsureAnotherAdminAsync(User user, Guid householdId, CancellationToken ct)
+    {
+        if (user.Role == UserRole.Admin
+            && user.Active
+            && !string.IsNullOrEmpty(user.PasswordHash)
+            && await users.CountUsableAdminsAsync(householdId, ct) <= 1)
+        {
+            throw new ValidationException(
+                "Este é o único administrador. Promova outro integrante antes.");
+        }
+    }
+
+    private async Task<User> GetOrThrowAsync(Guid householdId, Guid id, CancellationToken ct) =>
+        await users.GetInHouseholdAsync(householdId, id, ct)
         ?? throw new NotFoundException("Integrante não encontrado.");
 
     private static string Validate(MemberInput input)

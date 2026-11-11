@@ -20,7 +20,9 @@ export interface DonutLegendItem {
   percent: number
 }
 
-export function getMonthlySummary(transactions: Transaction[]): MonthlySummary {
+type Amounted = Pick<Transaction, 'type' | 'amount'>
+
+export function getMonthlySummary(transactions: Amounted[]): MonthlySummary {
   const income = sum(transactions.filter((t) => t.type === 'income'))
   const expense = sum(transactions.filter((t) => t.type === 'expense'))
   return { income, expense, balance: income - expense }
@@ -123,6 +125,6 @@ export function getMemberReport(
   }
 }
 
-function sum(transactions: Transaction[]): number {
+function sum(transactions: Amounted[]): number {
   return transactions.reduce((acc, t) => acc + t.amount, 0)
 }

@@ -4,9 +4,12 @@ namespace LocalFinance.Application.Interfaces;
 
 public interface ITransactionService
 {
-    Task<List<TransactionDto>> ListByMonthAsync(int year, int month, CancellationToken ct = default);
-    Task<TransactionDto> CreateAsync(TransactionInput input, CancellationToken ct = default);
+    Task<List<TransactionDto>> ListByMonthAsync(
+        Guid householdId, int year, int month, CancellationToken ct = default);
+    Task<TransactionDto> CreateAsync(
+        Guid householdId, TransactionInput input, CancellationToken ct = default);
     Task<TransactionDto> UpdateAsync(
-        Guid id, TransactionInput input, string? scope = null, CancellationToken ct = default);
-    Task DeleteAsync(Guid id, string? scope = null, CancellationToken ct = default);
+        Guid householdId, Guid id, TransactionInput input, string? scope = null,
+        CancellationToken ct = default);
+    Task DeleteAsync(Guid householdId, Guid id, string? scope = null, CancellationToken ct = default);
 }

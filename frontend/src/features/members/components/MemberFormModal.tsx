@@ -13,6 +13,7 @@ const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
 
 interface MemberFormModalProps {
   editing: Member | null
+  lockRole: boolean
   saving: boolean
   onClose: () => void
   onSubmit: (input: MemberInput) => void
@@ -20,6 +21,7 @@ interface MemberFormModalProps {
 
 export function MemberFormModal({
   editing,
+  lockRole,
   saving,
   onClose,
   onSubmit,
@@ -105,22 +107,30 @@ export function MemberFormModal({
           <label className="mb-2 mt-3.5 block text-[13px] font-semibold text-text-2">
             Papel
           </label>
-          <div className="mb-6 flex gap-1.5 rounded-xl bg-surface-2 p-[5px]">
+          <div
+            className={`flex gap-1.5 rounded-xl bg-surface-2 p-[5px] ${lockRole ? 'mb-2' : 'mb-6'}`}
+          >
             {ROLE_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 type="button"
+                disabled={lockRole}
                 onClick={() => setRole(option.value)}
-                className={`flex-1 rounded-[9px] py-[9px] text-[13.5px] ${
+                className={`flex-1 rounded-[9px] py-[9px] text-[13.5px] disabled:cursor-not-allowed ${
                   role === option.value
                     ? 'bg-surface font-semibold text-text shadow-card'
-                    : 'font-medium text-text-2'
+                    : 'font-medium text-text-2 disabled:opacity-50'
                 }`}
               >
                 {option.label}
               </button>
             ))}
           </div>
+          {lockRole && (
+            <p className="mb-6 text-[12px] leading-relaxed text-text-3">
+              Você não pode alterar o próprio papel. Peça a outro administrador.
+            </p>
+          )}
 
           <div className="flex gap-2.5">
             <button

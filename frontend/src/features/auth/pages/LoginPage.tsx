@@ -38,7 +38,7 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Entrar na sua conta"
-      subtitle="Acesse o painel financeiro da família."
+      subtitle="Acesse seu painel financeiro."
       footer={
         <>
           Não tem uma conta?{' '}

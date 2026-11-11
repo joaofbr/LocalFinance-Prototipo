@@ -21,10 +21,15 @@ import { useTransactionSheet } from '@/features/finance/TransactionSheetProvider
 import {
   useCategories,
   useDeleteTransaction,
+  useHasFamily,
   useMembers,
   useMonthlyTransactions,
 } from '@/features/finance/hooks'
 import { getMonthlySummary } from '@/features/finance/selectors'
+import {
+  groupTransactions,
+  shareOf,
+} from '@/features/finance/transactionEntries'
 
 const DELETE_MESSAGE: Record<TransactionScope, string> = {
   one: 'Lançamento excluído',
@@ -44,6 +49,7 @@ export function TransactionsPage() {
   const transactionsQuery = useMonthlyTransactions(year, month)
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
+  const hasFamily = useHasFamily()
   const deleteMutation = useDeleteTransaction()
 
   const isLoading =
@@ -54,17 +60,26 @@ export function TransactionsPage() {
   const categories = categoriesQuery.data ?? []
   const members = membersQuery.data ?? []
   const categoryById = new Map(categories.map((c) => [c.id, c]))
-  const memberById = new Map(members.map((m) => [m.id, m]))
 
-  const filtered = (transactionsQuery.data ?? []).filter((t) => {
-    if (filters.type !== 'all' && t.type !== filters.type) return false
-    if (filters.categoryId !== 'all' && t.categoryId !== filters.categoryId)
-      return false
-    if (filters.memberId !== 'all' && t.memberId !== filters.memberId)
-      return false
-    return true
-  })
-  const summary = getMonthlySummary(filtered)
+  const rows = groupTransactions(transactionsQuery.data ?? [])
+    .filter(({ transaction: t, memberIds }) => {
+      if (filters.type !== 'all' && t.type !== filters.type) return false
+      if (filters.categoryId !== 'all' && t.categoryId !== filters.categoryId)
+        return false
+      if (filters.memberId !== 'all' && !memberIds.includes(filters.memberId))
+        return false
+      return true
+    })
+    .map((entry) => ({
+      entry,
+      amount:
+        filters.memberId === 'all'
+          ? entry.total
+          : shareOf(entry, filters.memberId),
+    }))
+  const summary = getMonthlySummary(
+    rows.map(({ entry, amount }) => ({ type: entry.transaction.type, amount })),
+  )
 
   const removeTransaction = (id: string, scope: TransactionScope) => {
     deleteMutation.mutate(
@@ -101,6 +116,7 @@ export function TransactionsPage() {
         onChange={setFilters}
         categories={categories}
         members={members}
+        showMembers={hasFamily}
       />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
@@ -110,26 +126,30 @@ export function TransactionsPage() {
               <Skeleton key={index} height={52} />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : rows.length === 0 ? (
           <EmptyState onNew={openNew} />
         ) : (
           <>
             <div className="flex flex-col">
-              {filtered.map((transaction) => (
+              {rows.map(({ entry, amount }) => (
                 <TransactionListItem
-                  key={transaction.id}
-                  transaction={transaction}
-                  category={categoryById.get(transaction.categoryId)}
-                  member={memberById.get(transaction.memberId)}
-                  onEdit={() => openEdit(transaction)}
-                  onDelete={() => handleDelete(transaction)}
+                  key={entry.key}
+                  entry={entry}
+                  amount={amount}
+                  category={categoryById.get(entry.transaction.categoryId)}
+                  participants={members.filter((m) =>
+                    entry.memberIds.includes(m.id),
+                  )}
+                  showParticipants={hasFamily}
+                  onEdit={() => openEdit(entry)}
+                  onDelete={() => handleDelete(entry.transaction)}
                 />
               ))}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3.5 bg-surface-2 px-4 py-[15px]">
               <span className="text-[13px] font-semibold text-text-2">
-                {filtered.length} lançamento(s)
+                {rows.length} lançamento(s)
               </span>
               <div className="flex items-center gap-[18px] text-[13px]">
                 <SummaryStat label="Receitas" value={summary.income} tone="income" />

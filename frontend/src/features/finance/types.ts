@@ -57,6 +57,12 @@ export interface TransactionInput {
   repeatMode?: SeriesKind
 }
 
+export type HouseholdPlan = 'individual' | 'family'
+
+export interface Household {
+  plan: HouseholdPlan
+}
+
 export type MemberRole = 'Admin' | 'Member'
 
 export interface Member {

@@ -5,6 +5,8 @@ namespace LocalFinance.Domain.Entities;
 public class User
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid HouseholdId { get; set; }
+    public Household? Household { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;

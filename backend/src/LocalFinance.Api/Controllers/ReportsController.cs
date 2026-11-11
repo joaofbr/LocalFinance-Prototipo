@@ -1,3 +1,4 @@
+using LocalFinance.Api.Security;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -16,5 +17,5 @@ public class ReportsController(IReportService service) : ControllerBase
         [FromQuery] int month,
         [FromQuery] int months = 6,
         CancellationToken ct = default) =>
-        await service.GetMonthlyTrendAsync(year, month, months, ct);
+        await service.GetMonthlyTrendAsync(User.HouseholdId(), year, month, months, ct);
 }

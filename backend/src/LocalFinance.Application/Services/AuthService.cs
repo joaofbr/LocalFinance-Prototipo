@@ -11,6 +11,7 @@ namespace LocalFinance.Application.Services;
 
 public class AuthService(
     IUserRepository users,
+    ICategoryRepository categories,
     IRefreshTokenRepository refreshTokens,
     IPasswordHasher hasher,
     IJwtTokenGenerator tokens,
@@ -59,16 +60,19 @@ public class AuthService(
             throw new ConflictException("Já existe uma conta com este e-mail.");
         }
 
-        var count = await users.CountAsync(ct);
+        var household = new Household();
         var user = new User
         {
+            Household = household,
+            HouseholdId = household.Id,
             Name = request.Name.Trim(),
             Email = email,
             PasswordHash = hasher.Hash(request.Password),
-            Role = count == 0 ? UserRole.Admin : UserRole.Member,
-            Color = AvatarPalette.ForIndex(count),
+            Role = UserRole.Admin,
+            Color = AvatarPalette.ForIndex(0),
         };
         await users.AddAsync(user, ct);
+        await categories.AddRangeAsync(DefaultCategories.For(household.Id), ct);
         await users.SaveChangesAsync(ct);
         return await BuildResponseAsync(user, ct);
     }
@@ -167,6 +171,7 @@ public class AuthService(
 
         var raw = Generate();
         var now = DateTime.UtcNow;
+        await refreshTokens.DeleteExpiredAsync(now, ct);
         await refreshTokens.AddAsync(
             new RefreshToken
             {

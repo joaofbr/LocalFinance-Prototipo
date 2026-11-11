@@ -2,26 +2,26 @@ import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { formatCents, hexToRgba } from '@/lib/format'
 import { AmountInput } from './AmountInput'
+import type { TransactionEntry } from '../transactionEntries'
 import type {
   Category,
   Member,
   SeriesKind,
-  Transaction,
   TransactionInput,
   TransactionType,
 } from '../types'
 
 interface TransactionFormSheetProps {
-  editing: Transaction | null
+  editing: TransactionEntry | null
+  defaultDate: string
   categories: Category[]
   members: Member[]
+  hasFamily: boolean
   currentUserId: string
   saving: boolean
   onClose: () => void
   onSubmit: (input: TransactionInput) => void
 }
-
-const TODAY = new Date().toISOString().slice(0, 10)
 
 const REPEAT_OPTIONS = [
   2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 18, 24, 36, 48, 60,
@@ -29,23 +29,26 @@ const REPEAT_OPTIONS = [
 
 export function TransactionFormSheet({
   editing,
+  defaultDate,
   categories,
   members,
+  hasFamily,
   currentUserId,
   saving,
   onClose,
   onSubmit,
 }: TransactionFormSheetProps) {
-  const [type, setType] = useState<TransactionType>(editing?.type ?? 'expense')
+  const original = editing?.transaction
+  const [type, setType] = useState<TransactionType>(original?.type ?? 'expense')
   const [cents, setCents] = useState(
-    editing ? Math.round(editing.amount * 100) : 0,
+    editing ? Math.round(editing.total * 100) : 0,
   )
-  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '')
-  const [date, setDate] = useState(editing?.date ?? TODAY)
+  const [categoryId, setCategoryId] = useState(original?.categoryId ?? '')
+  const [date, setDate] = useState(original?.date ?? defaultDate)
   const [memberIds, setMemberIds] = useState<string[]>(() =>
-    editing ? [editing.memberId] : currentUserId ? [currentUserId] : [],
+    editing ? editing.memberIds : currentUserId ? [currentUserId] : [],
   )
-  const [description, setDescription] = useState(editing?.description ?? '')
+  const [description, setDescription] = useState(original?.description ?? '')
   const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>('none')
   const [repeat, setRepeat] = useState(12)
   const [errors, setErrors] = useState<{
@@ -59,14 +62,11 @@ export function TransactionFormSheet({
   )
 
   const activeMembers = members.filter((m) => m.active || memberIds.includes(m.id))
-  const sharing = !editing && memberIds.length > 1
+  const showMembers = hasFamily && activeMembers.length > 1
+  const sharing = memberIds.length > 1
 
   const toggleMember = (id: string) => {
     setErrors((e) => ({ ...e, members: undefined }))
-    if (editing) {
-      setMemberIds([id])
-      return
-    }
     setMemberIds((current) =>
       current.includes(id)
         ? current.filter((m) => m !== id)
@@ -140,6 +140,7 @@ export function TransactionFormSheet({
               label="Receita"
               tone="income"
               active={type === 'income'}
+              disabled={original?.seriesKind === 'installment'}
               onClick={() => changeType('income')}
             />
             <TypeButton
@@ -174,42 +175,48 @@ export function TransactionFormSheet({
             </div>
           )}
 
-          <label className="mb-2 mt-4 block text-[13px] font-semibold text-text-2">
-            {editing ? 'Integrante' : 'De quem é'}
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {activeMembers.map((member) => {
-              const selected = memberIds.includes(member.id)
-              return (
-                <button
-                  key={member.id}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleMember(member.id)}
-                  className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[13px] font-semibold"
-                  style={{
-                    borderColor: selected ? member.color : 'var(--border-strong)',
-                    background: selected
-                      ? hexToRgba(member.color, 0.14)
-                      : 'transparent',
-                    color: selected ? member.color : 'var(--text2)',
-                  }}
-                >
-                  {member.id === currentUserId ? 'Eu' : member.name}
-                </button>
-              )
-            })}
-          </div>
-          {errors.members && (
-            <div className="mt-2 text-[12.5px] font-semibold text-expense">
-              {errors.members}
-            </div>
-          )}
-          {sharing && (
-            <p className="mt-2 text-[12px] leading-relaxed text-text-3">
-              O valor será dividido igualmente entre os {memberIds.length}{' '}
-              selecionados.
-            </p>
+          {showMembers && (
+            <>
+              <label className="mb-2 mt-4 block text-[13px] font-semibold text-text-2">
+                De quem é
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {activeMembers.map((member) => {
+                  const selected = memberIds.includes(member.id)
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleMember(member.id)}
+                      className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[13px] font-semibold"
+                      style={{
+                        borderColor: selected
+                          ? member.color
+                          : 'var(--border-strong)',
+                        background: selected
+                          ? hexToRgba(member.color, 0.14)
+                          : 'transparent',
+                        color: selected ? member.color : 'var(--text2)',
+                      }}
+                    >
+                      {member.id === currentUserId ? 'Eu' : member.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {errors.members && (
+                <div className="mt-2 text-[12.5px] font-semibold text-expense">
+                  {errors.members}
+                </div>
+              )}
+              {sharing && (
+                <p className="mt-2 text-[12px] leading-relaxed text-text-3">
+                  O valor será dividido igualmente entre os {memberIds.length}{' '}
+                  selecionados.
+                </p>
+              )}
+            </>
           )}
 
           <label className="mb-2 mt-4 block text-[13px] font-semibold text-text-2">
@@ -247,20 +254,24 @@ export function TransactionFormSheet({
             </div>
           )}
 
-          <div className="mt-4 flex gap-3">
-            <div className="flex-1">
-              <label className="mb-1.5 block text-[13px] font-semibold text-text-2">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="date"
+                className="mb-1.5 block text-[13px] font-semibold text-text-2"
+              >
                 Data
               </label>
               <input
+                id="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+                className="block w-full min-w-0 rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
               />
             </div>
             {canRepeat && (
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <label
                   htmlFor="repeatMode"
                   className="mb-1.5 block text-[13px] font-semibold text-text-2"
@@ -355,10 +366,17 @@ interface TypeButtonProps {
   label: string
   tone: 'income' | 'expense'
   active: boolean
+  disabled?: boolean
   onClick: () => void
 }
 
-function TypeButton({ label, tone, active, onClick }: TypeButtonProps) {
+function TypeButton({
+  label,
+  tone,
+  active,
+  disabled = false,
+  onClick,
+}: TypeButtonProps) {
   const activeClass =
     tone === 'income'
       ? 'border-income bg-income-bg text-income'
@@ -367,7 +385,9 @@ function TypeButton({ label, tone, active, onClick }: TypeButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-3 text-[14.5px] font-bold ${active ? activeClass : 'border-border-strong bg-surface-2 text-text-2'
+      disabled={disabled}
+      title={disabled ? 'Receitas não podem ser parceladas' : undefined}
+      className={`flex-1 rounded-xl border py-3 text-[14.5px] font-bold disabled:opacity-50 ${active ? activeClass : 'border-border-strong bg-surface-2 text-text-2'
         }`}
     >
       {label}

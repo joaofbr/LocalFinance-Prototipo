@@ -1,3 +1,4 @@
+using LocalFinance.Api.Security;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -12,21 +13,21 @@ public class CategoriesController(ICategoryService service) : ControllerBase
 {
     [HttpGet]
     public async Task<List<CategoryDto>> List(CancellationToken ct) =>
-        await service.ListAsync(ct);
+        await service.ListAsync(User.HouseholdId(), ct);
 
     [HttpGet("usage")]
     public async Task<Dictionary<string, int>> Usage(CancellationToken ct) =>
-        await service.GetUsageAsync(ct);
+        await service.GetUsageAsync(User.HouseholdId(), ct);
 
     [HttpPost]
     public async Task<CategoryDto> Create(CategoryInput input, CancellationToken ct) =>
-        await service.CreateAsync(input, ct);
+        await service.CreateAsync(User.HouseholdId(), input, ct);
 
     [HttpPut("{id:guid}")]
     public async Task<CategoryDto> Update(Guid id, CategoryInput input, CancellationToken ct) =>
-        await service.UpdateAsync(id, input, ct);
+        await service.UpdateAsync(User.HouseholdId(), id, input, ct);
 
     [HttpPatch("{id:guid}/active")]
     public async Task<CategoryDto> SetActive(Guid id, SetActiveInput input, CancellationToken ct) =>
-        await service.SetActiveAsync(id, input.Active, ct);
+        await service.SetActiveAsync(User.HouseholdId(), id, input.Active, ct);
 }

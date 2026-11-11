@@ -3,11 +3,13 @@ import { Logo } from '@/components/ui/Logo'
 import { Avatar } from '@/components/ui/Avatar'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/features/auth/useAuth'
-import { NAV_ITEMS } from './navConfig'
+import { useHousehold } from '@/features/finance/hooks'
+import { NAV_ITEMS, visibleNavItems } from './navConfig'
 
 export function Sidebar() {
   const { user, logout } = useAuth()
   const isAdmin = user?.role !== 'Member'
+  const plan = useHousehold().data?.plan
 
   return (
     <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col border-r border-border bg-surface px-4 py-[22px] lg:flex">
@@ -16,7 +18,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5">
-        {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
+        {visibleNavItems(NAV_ITEMS, { isAdmin, plan }).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

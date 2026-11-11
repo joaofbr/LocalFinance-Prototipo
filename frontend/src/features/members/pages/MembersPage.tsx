@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -11,15 +12,20 @@ import type { Member, MemberInput } from '@/features/finance/types'
 import {
   useCreateMember,
   useDeleteMember,
+  useHousehold,
   useMembers,
   useResendMemberInvite,
   useSetMemberActive,
   useUpdateMember,
 } from '@/features/finance/hooks'
+import { useChangePlan } from '@/features/household/useChangePlan'
 import { MemberFormModal } from '../components/MemberFormModal'
 
 export function MembersPage() {
   const { showToast } = useToast()
+  const householdQuery = useHousehold()
+  const changePlan = useChangePlan()
+  const [confirmingIndividual, setConfirmingIndividual] = useState(false)
   const membersQuery = useMembers()
   const createMutation = useCreateMember()
   const updateMutation = useUpdateMember()
@@ -35,6 +41,9 @@ export function MembersPage() {
   const saving = createMutation.isPending || updateMutation.isPending
   const isAdmin = user?.role !== 'Member'
 
+  const showError = (fallback: string) => (error: unknown) =>
+    showToast(getApiErrorMessage(error, fallback), 'warning')
+
   const handleSubmit = (input: MemberInput) => {
     if (modal?.editing) {
       updateMutation.mutate(
@@ -44,10 +53,12 @@ export function MembersPage() {
             setModal(null)
             showToast('Integrante atualizado')
           },
+          onError: showError('Não foi possível atualizar o integrante'),
         },
       )
     } else {
       createMutation.mutate(input, {
+        onError: showError('Não foi possível cadastrar o integrante'),
         onSuccess: (member) => {
           setModal(null)
           if (member.inviteSent === false) {
@@ -72,6 +83,7 @@ export function MembersPage() {
             member.active ? 'Integrante desativado' : 'Integrante reativado',
             'neutral',
           ),
+        onError: showError('Não foi possível alterar o integrante'),
       },
     )
   }
@@ -85,6 +97,19 @@ export function MembersPage() {
           'warning',
         ),
     })
+  }
+
+  const otherActiveMembers = members.filter(
+    (m) => m.active && m.id !== user?.id,
+  ).length
+
+  const switchToIndividual = () =>
+    changePlan.mutate('individual', {
+      onError: () => setConfirmingIndividual(false),
+    })
+
+  if (householdQuery.data?.plan === 'individual') {
+    return <Navigate to="/modo-familia" replace />
   }
 
   const handleDelete = () => {
@@ -120,7 +145,7 @@ export function MembersPage() {
           </div>
           <p className="mt-[3px] text-[13.5px] text-text-2">
             {isAdmin
-              ? 'Gerencie quem tem acesso ao painel da família.'
+              ? 'Gerencie quem tem acesso ao seu painel.'
               : 'Veja quem tem acesso ao painel. Só o Admin pode fazer alterações.'}
           </p>
         </div>
@@ -135,6 +160,19 @@ export function MembersPage() {
           </Button>
         )}
       </div>
+
+      {isAdmin && !membersQuery.isLoading && members.length === 1 && (
+        <div className="mb-3.5 flex items-start gap-3 rounded-2xl border border-border bg-primary-weak p-4">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
+            <Icon name="users" size={18} />
+          </span>
+          <p className="text-[13.5px] leading-relaxed text-text-2">
+            <strong className="text-text">Modo família ativado.</strong>{' '}
+            Cadastre quem divide as contas com você: a pessoa recebe um convite
+            por e-mail para criar a senha e passa a ver os mesmos lançamentos.
+          </p>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
         {membersQuery.isLoading ? (
@@ -153,6 +191,7 @@ export function MembersPage() {
               onResend={() => handleResend(member)}
               onDelete={() => setConfirmingDelete(member)}
               canManage={isAdmin}
+              canToggle={isAdmin && member.id !== user?.id}
               canDelete={isAdmin && member.id !== user?.id}
               resending={
                 resendMutation.isPending &&
@@ -162,6 +201,40 @@ export function MembersPage() {
           ))
         )}
       </div>
+
+      {isAdmin && !membersQuery.isLoading && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-semibold">
+              Voltar ao modo individual
+            </div>
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-text-3">
+              {otherActiveMembers > 0
+                ? 'Desative os outros integrantes antes de voltar.'
+                : 'Só você continua com acesso. O histórico dos outros integrantes é mantido.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={otherActiveMembers > 0}
+            onClick={() => setConfirmingIndividual(true)}
+            className="whitespace-nowrap rounded-[10px] border border-border-strong px-[13px] py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Voltar ao individual
+          </button>
+        </div>
+      )}
+
+      {confirmingIndividual && (
+        <ConfirmDialog
+          title="Voltar ao modo individual"
+          message="A tela de Integrantes deixa de aparecer e não será possível cadastrar outras pessoas. Seus lançamentos e categorias continuam como estão."
+          confirmLabel="Voltar ao individual"
+          busy={changePlan.isPending}
+          onConfirm={switchToIndividual}
+          onCancel={() => setConfirmingIndividual(false)}
+        />
+      )}
 
       {confirmingDelete && (
         <ConfirmDialog
@@ -178,6 +251,7 @@ export function MembersPage() {
       {modal && (
         <MemberFormModal
           editing={modal.editing}
+          lockRole={modal.editing?.id === user?.id}
           saving={saving}
           onClose={() => setModal(null)}
           onSubmit={handleSubmit}
@@ -194,6 +268,7 @@ interface MemberRowProps {
   onResend: () => void
   onDelete: () => void
   canManage: boolean
+  canToggle: boolean
   canDelete: boolean
   resending: boolean
 }
@@ -205,6 +280,7 @@ function MemberRow({
   onResend,
   onDelete,
   canManage,
+  canToggle,
   canDelete,
   resending,
 }: MemberRowProps) {
@@ -268,7 +344,7 @@ function MemberRow({
           <Icon name="pencil" size={16} />
         </button>
       )}
-      {canManage && (
+      {canToggle && (
         <button
           type="button"
           onClick={onToggle}

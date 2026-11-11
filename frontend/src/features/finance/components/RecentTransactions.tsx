@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { formatDateShort, formatMoney } from '@/lib/format'
 import { CategoryIconBadge } from './CategoryIconBadge'
 import { SeriesBadge } from './SeriesBadge'
+import { groupTransactions } from '../transactionEntries'
 import type { Category, Transaction } from '../types'
 
 interface RecentTransactionsProps {
@@ -21,8 +22,8 @@ export function RecentTransactions({
 }: RecentTransactionsProps) {
   const navigate = useNavigate()
   const byId = new Map(categories.map((c) => [c.id, c]))
-  const recent = [...transactions]
-    .sort((a, b) => b.date.localeCompare(a.date))
+  const recent = groupTransactions(transactions)
+    .sort((a, b) => b.transaction.date.localeCompare(a.transaction.date))
     .slice(0, 5)
 
   return (
@@ -44,12 +45,12 @@ export function RecentTransactions({
         </p>
       ) : (
         <div className="flex flex-col">
-          {recent.map((t) => {
+          {recent.map(({ key, transaction: t, total }) => {
             const category = byId.get(t.categoryId) ?? FALLBACK_CATEGORY
             const isIncome = t.type === 'income'
             return (
               <div
-                key={t.id}
+                key={key}
                 className="flex items-center gap-3 border-b border-border py-[11px] last:border-0"
               >
                 <CategoryIconBadge icon={category.icon} color={category.color} />
@@ -70,7 +71,7 @@ export function RecentTransactions({
                   }`}
                 >
                   {isIncome ? '+ ' : '- '}
-                  {formatMoney(t.amount)}
+                  {formatMoney(total)}
                 </span>
               </div>
             )

@@ -116,7 +116,7 @@ export function SetPasswordPage() {
       >
         <FormAlert message={inviteError} />
         <p className="text-[13.5px] text-text-2">
-          Peça ao administrador da família para reenviar o convite pela tela de
+          Peça a quem te convidou para reenviar o convite pela tela de
           Integrantes.
         </p>
       </AuthLayout>

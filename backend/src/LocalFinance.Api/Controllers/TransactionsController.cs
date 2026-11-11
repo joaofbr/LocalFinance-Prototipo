@@ -1,3 +1,4 @@
+using LocalFinance.Api.Security;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -15,11 +16,11 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         [FromQuery] int year,
         [FromQuery] int month,
         CancellationToken ct) =>
-        await service.ListByMonthAsync(year, month, ct);
+        await service.ListByMonthAsync(User.HouseholdId(), year, month, ct);
 
     [HttpPost]
     public async Task<TransactionDto> Create(TransactionInput input, CancellationToken ct) =>
-        await service.CreateAsync(input, ct);
+        await service.CreateAsync(User.HouseholdId(), input, ct);
 
     [HttpPut("{id:guid}")]
     public async Task<TransactionDto> Update(
@@ -27,7 +28,7 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         TransactionInput input,
         [FromQuery] string? scope,
         CancellationToken ct) =>
-        await service.UpdateAsync(id, input, scope, ct);
+        await service.UpdateAsync(User.HouseholdId(), id, input, scope, ct);
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(
@@ -35,7 +36,7 @@ public class TransactionsController(ITransactionService service) : ControllerBas
         [FromQuery] string? scope,
         CancellationToken ct)
     {
-        await service.DeleteAsync(id, scope, ct);
+        await service.DeleteAsync(User.HouseholdId(), id, scope, ct);
         return NoContent();
     }
 }

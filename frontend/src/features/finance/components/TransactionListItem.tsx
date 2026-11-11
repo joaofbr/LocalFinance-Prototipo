@@ -1,13 +1,24 @@
 import { Icon } from '@/components/ui/Icon'
-import { formatDateShort, formatMoney, getInitials, hexToRgba } from '@/lib/format'
+import {
+  formatDateShort,
+  formatMoney,
+  getInitials,
+  hexToRgba,
+  joinNames,
+} from '@/lib/format'
 import { CategoryIconBadge } from './CategoryIconBadge'
 import { SeriesBadge } from './SeriesBadge'
-import type { Category, Member, Transaction } from '../types'
+import type { TransactionEntry } from '../transactionEntries'
+import type { Category, Member } from '../types'
+
+type Participant = Pick<Member, 'id' | 'name' | 'color'>
 
 interface TransactionListItemProps {
-  transaction: Transaction
+  entry: TransactionEntry
+  amount: number
   category?: Pick<Category, 'name' | 'color' | 'icon'>
-  member?: Pick<Member, 'name' | 'color'>
+  participants: Participant[]
+  showParticipants: boolean
   onEdit: () => void
   onDelete: () => void
 }
@@ -17,19 +28,29 @@ const FALLBACK_CATEGORY: Pick<Category, 'name' | 'color' | 'icon'> = {
   color: '#94a3b8',
   icon: 'tag',
 }
-const FALLBACK_MEMBER: Pick<Member, 'name' | 'color'> = {
+const FALLBACK_MEMBER: Participant = {
+  id: '',
   name: '—',
   color: '#94a3b8',
 }
 
 export function TransactionListItem({
-  transaction,
+  entry,
+  amount,
   category = FALLBACK_CATEGORY,
-  member = FALLBACK_MEMBER,
+  participants,
+  showParticipants,
   onEdit,
   onDelete,
 }: TransactionListItemProps) {
+  const { transaction } = entry
   const isIncome = transaction.type === 'income'
+  const people = participants.length > 0 ? participants : [FALLBACK_MEMBER]
+  const shared = people.length > 1
+  const names = joinNames(
+    people.map((p) => (shared ? p.name.split(' ')[0] : p.name)),
+  )
+  const isShare = shared && amount !== entry.total
 
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-0">
@@ -40,30 +61,52 @@ export function TransactionListItem({
           {transaction.description}
         </div>
         <div className="mt-[3px] flex items-center gap-1.5 text-[12px] text-text-3">
-          <span
-            className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-            style={{
-              background: hexToRgba(member.color, 0.16),
-              color: member.color,
-            }}
-          >
-            {getInitials(member.name)}
-          </span>
+          {showParticipants && (
+            <span
+              className="flex flex-shrink-0"
+              title={shared ? `Dividido entre ${joinNames(people.map((p) => p.name))}` : undefined}
+            >
+              {people.map((person, index) => (
+                <span
+                  key={person.id || index}
+                  className={`rounded-full bg-surface ring-2 ring-surface ${index > 0 ? '-ml-1.5' : ''}`}
+                >
+                  <span
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[10px] font-bold"
+                    style={{
+                      background: hexToRgba(person.color, 0.16),
+                      color: person.color,
+                    }}
+                  >
+                    {getInitials(person.name)}
+                  </span>
+                </span>
+              ))}
+            </span>
+          )}
           <span className="truncate">
-            {member.name} · {category.name} · {formatDateShort(transaction.date)}
+            {showParticipants && `${names} · `}
+            {category.name} · {formatDateShort(transaction.date)}
           </span>
-          <SeriesBadge transaction={transaction} />
+          <SeriesBadge transaction={transaction} showShared={false} />
         </div>
       </div>
 
-      <span
-        className={`whitespace-nowrap text-[15px] font-bold tabular-nums ${
-          isIncome ? 'text-income' : 'text-expense'
-        }`}
-      >
-        {isIncome ? '+ ' : '- '}
-        {formatMoney(transaction.amount)}
-      </span>
+      <div className="flex flex-col items-end">
+        <span
+          className={`whitespace-nowrap text-[15px] font-bold tabular-nums ${
+            isIncome ? 'text-income' : 'text-expense'
+          }`}
+        >
+          {isIncome ? '+ ' : '- '}
+          {formatMoney(amount)}
+        </span>
+        {isShare && (
+          <span className="whitespace-nowrap text-[11px] tabular-nums text-text-3">
+            de {formatMoney(entry.total)}
+          </span>
+        )}
+      </div>
 
       <div className="flex gap-0.5">
         <button

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   Category,
   CategoryInput,
+  Household,
   Member,
   MemberInput,
   MonthlyTrendPoint,
@@ -56,11 +57,24 @@ export function useSetCategoryActive() {
   })
 }
 
+export function useHousehold() {
+  return useQuery<Household>({
+    queryKey: ['household'],
+    queryFn: () => financeApi.getHousehold(),
+  })
+}
+
 export function useMembers() {
   return useQuery<Member[]>({
     queryKey: ['members'],
     queryFn: () => financeApi.getMembers(),
   })
+}
+
+export function useHasFamily(): boolean {
+  const plan = useHousehold().data?.plan
+  const memberCount = useMembers().data?.length ?? 0
+  return plan === 'family' && memberCount > 1
 }
 
 function useInvalidateMembers() {

@@ -2,6 +2,8 @@ import { apiClient } from '@/api/client'
 import type {
   Category,
   CategoryInput,
+  Household,
+  HouseholdPlan,
   Member,
   MemberInput,
   MonthlyTrendPoint,
@@ -37,6 +39,16 @@ export const financeApi = {
   async getCategoryUsage(): Promise<Record<string, number>> {
     const { data } =
       await apiClient.get<Record<string, number>>('/categories/usage')
+    return data
+  },
+
+  async getHousehold(): Promise<Household> {
+    const { data } = await apiClient.get<Household>('/household')
+    return data
+  },
+
+  async setHouseholdPlan(plan: HouseholdPlan): Promise<Household> {
+    const { data } = await apiClient.put<Household>('/household/plan', { plan })
     return data
   },
 

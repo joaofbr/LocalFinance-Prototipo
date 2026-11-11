@@ -39,6 +39,16 @@ public static class EnumMapping
         _ => throw new ValidationException("Tipo de repetição inválido."),
     };
 
+    public static string ToDto(this HouseholdPlan plan) =>
+        plan == HouseholdPlan.Family ? "family" : "individual";
+
+    public static HouseholdPlan ParseHouseholdPlan(string value) => value switch
+    {
+        "individual" => HouseholdPlan.Individual,
+        "family" => HouseholdPlan.Family,
+        _ => throw new ValidationException("Plano inválido."),
+    };
+
     public static string ToDto(this UserRole role) =>
         role == UserRole.Admin ? "Admin" : "Member";
 

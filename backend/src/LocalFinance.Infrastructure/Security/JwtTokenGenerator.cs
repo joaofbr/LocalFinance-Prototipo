@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using LocalFinance.Application.Common;
 using LocalFinance.Application.Interfaces;
 using LocalFinance.Domain.Entities;
 using LocalFinance.Domain.Enums;
@@ -21,6 +22,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerato
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Name, user.Name),
             new(ClaimTypes.Role, user.Role == UserRole.Admin ? "Admin" : "Member"),
+            new(AppClaims.Household, user.HouseholdId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(opts.Key));

@@ -2,7 +2,7 @@ import { Icon } from '@/components/ui/Icon'
 
 const FEATURES = [
   'Resumo mensal com gráficos por categoria',
-  'Login por integrante e gestão de acessos',
+  'Use sozinho ou convide a família',
   'Categorias coloridas e relatórios detalhados',
 ]
 
@@ -20,11 +20,11 @@ export function BrandPanel() {
 
       <div className="max-w-[400px]">
         <h1 className="mb-[18px] text-[36px] font-extrabold leading-[1.15] tracking-tight">
-          O controle financeiro de toda a família, em um só lugar.
+          Suas finanças, sozinho ou em família, em um só lugar.
         </h1>
         <p className="text-base leading-relaxed text-white/85">
-          Registre receitas e despesas por integrante, acompanhe o resumo do mês
-          e tome decisões com clareza.
+          Registre receitas e despesas, acompanhe o resumo do mês e, quando
+          quiser, convide quem divide as contas com você.
         </p>
       </div>
 
