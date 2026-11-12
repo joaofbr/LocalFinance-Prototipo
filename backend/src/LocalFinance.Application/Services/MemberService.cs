@@ -46,20 +46,32 @@ public class MemberService(
         await users.AddAsync(user, ct);
         await users.SaveChangesAsync(ct);
 
-        var inviteSent = true;
+        return ToDto(user, await TrySendInviteAsync(user, ct));
+    }
+
+    private async Task<bool> TrySendInviteAsync(User user, CancellationToken ct)
+    {
         try
         {
             await invites.SendInviteAsync(user, ct);
+            return true;
         }
         catch (Exception ex)
         {
-            inviteSent = false;
             logger.LogError(ex,
-                "Integrante {Email} criado, mas o convite não pôde ser enviado.",
+                "Convite para {Email} não pôde ser enviado.",
                 user.Email);
+            return false;
         }
+    }
 
-        return ToDto(user, inviteSent);
+    private static void EnsureNotReleased(User user)
+    {
+        if (ReleasedInvite.IsReleased(user.Email))
+        {
+            throw new ValidationException(
+                "Esta pessoa recusou o convite. Para convidar de novo, cadastre-a outra vez.");
+        }
     }
 
     public async Task DeleteAsync(
@@ -109,6 +121,15 @@ public class MemberService(
             throw new ConflictException(EmailInUse);
         }
 
+        EnsureNotReleased(user);
+        var emailChanged = !string.Equals(email, user.Email, StringComparison.Ordinal);
+        var pendingInvite = string.IsNullOrEmpty(user.PasswordHash);
+        if (emailChanged && !pendingInvite && user.Id != requestedBy)
+        {
+            throw new ValidationException(
+                "O e-mail de quem já ativou a conta não pode ser trocado por outra pessoa.");
+        }
+
         var role = EnumMapping.ParseUserRole(input.Role);
         if (role != user.Role && user.Id == requestedBy)
         {
@@ -123,14 +144,24 @@ public class MemberService(
         user.Name = input.Name.Trim();
         user.Email = email;
         user.Role = role;
+        if (emailChanged && pendingInvite)
+        {
+            await invites.InvalidatePendingAsync(user.Id, ct);
+        }
         await users.SaveChangesAsync(ct);
-        return ToDto(user);
+
+        if (!emailChanged || !pendingInvite || !user.Active)
+        {
+            return ToDto(user);
+        }
+        return ToDto(user, await TrySendInviteAsync(user, ct));
     }
 
     public async Task<MemberDto> SetActiveAsync(
         Guid householdId, Guid id, bool active, Guid requestedBy, CancellationToken ct = default)
     {
         var user = await GetOrThrowAsync(householdId, id, ct);
+        EnsureNotReleased(user);
         if (user.Id == requestedBy)
         {
             throw new ValidationException("Você não pode alterar o status da própria conta.");
@@ -187,5 +218,6 @@ public class MemberService(
         user.Active,
         user.Color,
         string.IsNullOrEmpty(user.PasswordHash),
+        ReleasedInvite.IsReleased(user.Email),
         inviteSent);
 }

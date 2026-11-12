@@ -8,6 +8,7 @@ public record MemberDto(
     bool Active,
     string Color,
     bool PasswordPending,
+    bool InviteDeclined,
     bool? InviteSent = null);
 
 public record MemberInput(string Name, string Email, string Role);

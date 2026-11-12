@@ -183,7 +183,7 @@ export function MembersPage() {
               onResend={() => handleResend(member)}
               onDelete={() => setConfirmingDelete(member)}
               canManage={isAdmin}
-              canToggle={isAdmin && member.id !== user?.id}
+              canToggle={isAdmin && member.id !== user?.id && !member.inviteDeclined}
               canDelete={isAdmin && member.id !== user?.id}
               resending={
                 resendMutation.isPending &&
@@ -244,6 +244,11 @@ export function MembersPage() {
         <MemberFormModal
           editing={modal.editing}
           lockRole={modal.editing?.id === user?.id}
+          lockEmail={
+            Boolean(modal.editing) &&
+            modal.editing?.id !== user?.id &&
+            !modal.editing?.passwordPending
+          }
           saving={saving}
           onClose={() => setModal(null)}
           onSubmit={handleSubmit}
@@ -301,12 +306,13 @@ function MemberRow({
             )}
             {!member.active && (
               <span className="flex-shrink-0 rounded-full bg-neutral-bg px-2 py-[2px] text-[11px] font-semibold text-text-3">
-                Inativo
+                {member.inviteDeclined ? 'Recusou o convite' : 'Inativo'}
               </span>
             )}
           </div>
           <div className="truncate text-[12.5px] text-text-3">
-            {member.role === 'Admin' ? 'Administrador' : 'Membro'} · {member.email}
+            {member.role === 'Admin' ? 'Administrador' : 'Membro'} ·{' '}
+            {member.inviteDeclined ? 'mantido só no histórico de lançamentos' : member.email}
           </div>
         </div>
       </div>
@@ -333,15 +339,17 @@ function MemberRow({
               {member.active ? 'Desativar' : 'Reativar'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={onEdit}
-            title="Editar"
-            aria-label={`Editar ${member.name}`}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
-          >
-            <Icon name="pencil" size={16} />
-          </button>
+          {!member.inviteDeclined && (
+            <button
+              type="button"
+              onClick={onEdit}
+              title="Editar"
+              aria-label={`Editar ${member.name}`}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] border border-border text-text-2 hover:bg-surface-2"
+            >
+              <Icon name="pencil" size={16} />
+            </button>
+          )}
           {canDelete && (
             <button
               type="button"

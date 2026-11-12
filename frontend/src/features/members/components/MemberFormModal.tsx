@@ -14,6 +14,7 @@ const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
 interface MemberFormModalProps {
   editing: Member | null
   lockRole: boolean
+  lockEmail: boolean
   saving: boolean
   onClose: () => void
   onSubmit: (input: MemberInput) => void
@@ -22,6 +23,7 @@ interface MemberFormModalProps {
 export function MemberFormModal({
   editing,
   lockRole,
+  lockEmail,
   saving,
   onClose,
   onSubmit,
@@ -91,13 +93,19 @@ export function MemberFormModal({
           <input
             type="email"
             value={email}
+            readOnly={lockEmail}
             onChange={(e) => {
               setEmail(e.target.value)
               setErrors((prev) => ({ ...prev, email: undefined }))
             }}
             placeholder="maria@email.com"
-            className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14.5px] text-text outline-none focus:border-primary"
+            className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14.5px] text-text outline-none read-only:bg-surface-2 read-only:text-text-2 focus:border-primary"
           />
+          {lockEmail && (
+            <p className="mt-1.5 text-[12px] leading-relaxed text-text-3">
+              Esta pessoa já ativou a conta, então só ela pode trocar o próprio e-mail.
+            </p>
+          )}
           {errors.email && (
             <div className="mt-1.5 text-[12px] font-semibold text-expense">
               {errors.email}

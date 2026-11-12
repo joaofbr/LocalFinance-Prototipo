@@ -38,6 +38,10 @@ export const authApi = {
     await apiClient.post('/auth/set-password', { token, password })
   },
 
+  async declineInvite(token: string): Promise<void> {
+    await apiClient.post('/auth/invite/decline', { token })
+  },
+
   async forgotPassword(email: string): Promise<void> {
     await apiClient.post('/auth/forgot-password', { email })
   },

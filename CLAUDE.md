@@ -96,6 +96,21 @@ Regras para não vazar dados entre contas:
 - Integrante com lançamentos não pode ser excluído, só desativado, para preservar o histórico.
 - `POST /api/members` envia e-mail e usa o limite de taxa `Email`.
 
+## Convites e senha
+
+- O e-mail de convite e a página do link (`/definir-senha`) dizem **quem convidou** e o que muda ao
+  aceitar. O convidado pode **recusar** (`POST /api/auth/invite/decline`).
+- Um convite nunca aceito não "prende" o e-mail:
+  - "Esqueci a senha" de quem nunca ativou a conta **reenvia o convite**; nunca ativa a conta em
+    silêncio.
+  - Cadastro com o e-mail de um convite nunca aceito libera o convite e cria a conta própria.
+  - Liberar um convite (`MemberInviteService.ReleasePendingAsync`): sem lançamentos, o usuário é
+    apagado; com lançamentos, fica inativo e o e-mail vira um marcador (`ReleasedInvite`), para o
+    histórico continuar de pé. Quem recusou não pode ser reativado nem editado.
+- Só a própria pessoa troca o e-mail de uma conta já ativada. Trocar o e-mail de um convite pendente
+  invalida o link anterior e reenvia o convite.
+- Definir ou redefinir a senha encerra todas as sessões abertas (revoga os refresh tokens).
+
 ## Lançamentos
 
 - Um lançamento dividido vira uma linha por integrante, com o mesmo `SeriesId`/`SeriesIndex` e
@@ -170,31 +185,23 @@ Regras para não vazar dados entre contas:
 - Tokens de convite e de troca de senha: 256 bits, guardados como hash, uso único, com validade.
 - Toda requisição autenticada revalida usuário, família e papel no banco (`OnTokenValidated`).
 - Refresh tokens vencidos são apagados a cada emissão de sessão.
+- Convites: dizem quem convidou, podem ser recusados e não prendem o e-mail de quem nunca aceitou.
 
 ## Pendências conhecidas
 
 Pontos válidos dos reviews de código e de segurança de 2026-11-11 que ainda não foram resolvidos.
 
-1. **Pré-sequestro por convite.** Qualquer admin pode cadastrar um e-mail que ainda não tem conta. O dono
-   desse e-mail não consegue mais criar conta própria (409), e o "esqueci a senha" ativa a conta dentro
-   da família de quem convidou. O convite não diz quem convidou. Correção: tabela de convites com aceite
-   explícito, cadastro assume convite nunca aceito, e-mail e tela de senha com o nome de quem convidou.
-2. **Admin troca o e-mail de quem já tem senha** sem verificação, o que permite tomar a conta via
-   "esqueci a senha". Correção: bloquear ou exigir confirmação no e-mail novo.
-3. **Trocar o e-mail de um convite pendente não invalida o link já enviado** (vale 48h).
-4. **Definir ou redefinir senha não revoga os refresh tokens existentes**
-   (`MemberInviteService.SetPasswordAsync`).
-5. **Enumeração de e-mail.** O 409 do cadastro e de criar/editar integrante revela se um e-mail tem conta.
+1. **Enumeração de e-mail.** O 409 do cadastro e de criar/editar integrante revela se um e-mail tem conta.
    Cadastro e criação têm limite de taxa; edição não.
-6. **Corrida na trava de último admin.** Dois admins rebaixando um ao outro ao mesmo tempo podem passar
+2. **Corrida na trava de último admin.** Dois admins rebaixando um ao outro ao mesmo tempo podem passar
    os dois pela checagem. Correção: transação serializável ou lock na família.
-7. **Isolamento feito à mão.** Depende de passar `householdId` em todo método. Alternativa mais robusta:
+3. **Isolamento feito à mão.** Depende de passar `householdId` em todo método. Alternativa mais robusta:
    `HasQueryFilter` global por família, com cuidado nos fluxos de autenticação.
-8. **Navegação depende de `GET /api/household`.** Enquanto carrega, ou se falhar, "Integrantes" e
+4. **Navegação depende de `GET /api/household`.** Enquanto carrega, ou se falhar, "Integrantes" e
    "Modo família" somem do menu. Alternativa: devolver o plano junto do usuário no login e no `/me`.
-9. **Proxy reverso.** `KnownProxies`/`KnownIPNetworks` são limpos, então um `X-Forwarded-For` forjado muda
+5. **Proxy reverso.** `KnownProxies`/`KnownIPNetworks` são limpos, então um `X-Forwarded-For` forjado muda
     a chave do limite de taxa. Em produção, configure o proxy conhecido.
-10. **Dependência vulnerável.** `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902/NU1903), transitiva via
+6. **Dependência vulnerável.** `System.Security.Cryptography.Pkcs` 10.0.0 (NU1902/NU1903), transitiva via
     MailKit/MimeKit. Atualize quando sair versão corrigida ou fixe a versão no `.csproj`.
-11. **Sem testes automatizados.** O `backend/tests/` previsto no plano não existe; os cenários de
+7. **Sem testes automatizados.** O `backend/tests/` previsto no plano não existe; os cenários de
     isolamento foram testados à mão contra um Postgres descartável.

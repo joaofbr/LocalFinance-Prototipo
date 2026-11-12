@@ -73,6 +73,7 @@ export interface Member {
   active: boolean
   color: string
   passwordPending: boolean
+  inviteDeclined: boolean
   inviteSent?: boolean | null
 }
 

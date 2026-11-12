@@ -12,6 +12,7 @@ namespace LocalFinance.Application.Services;
 public class AuthService(
     IUserRepository users,
     IHouseholdRepository households,
+    IMemberInviteService invites,
     ICategoryRepository categories,
     IRefreshTokenRepository refreshTokens,
     IPasswordHasher hasher,
@@ -58,9 +59,14 @@ public class AuthService(
             throw new ValidationException(
                 $"A senha deve ter ao menos {MinPasswordLength} caracteres.");
         }
-        if (await users.GetByEmailAsync(email, ct) is not null)
+        var existing = await users.GetByEmailAsync(email, ct);
+        if (existing is not null)
         {
-            throw new ConflictException("Já existe uma conta com este e-mail.");
+            if (!string.IsNullOrEmpty(existing.PasswordHash))
+            {
+                throw new ConflictException("Já existe uma conta com este e-mail.");
+            }
+            await invites.ReleasePendingAsync(existing, ct);
         }
 
         var developer = platform.IsDeveloper(email);

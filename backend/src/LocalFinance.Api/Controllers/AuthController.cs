@@ -23,6 +23,14 @@ public class AuthController(IAuthService auth, IMemberInviteService invites) : C
         return NoContent();
     }
 
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
+    [HttpPost("invite/decline")]
+    public async Task<IActionResult> DeclineInvite(DeclineInviteRequest request, CancellationToken ct)
+    {
+        await invites.DeclineAsync(request.Token, ct);
+        return NoContent();
+    }
+
     [EnableRateLimiting(RateLimitPolicies.Email)]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)

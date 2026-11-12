@@ -4,6 +4,7 @@ using LocalFinance.Application.Common;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
 using LocalFinance.Domain.Entities;
+using LocalFinance.Domain.Enums;
 using LocalFinance.Domain.Repositories;
 
 namespace LocalFinance.Application.Services;
@@ -11,6 +12,8 @@ namespace LocalFinance.Application.Services;
 public class MemberInviteService(
     IUserRepository users,
     IPasswordSetupTokenRepository tokens,
+    IRefreshTokenRepository refreshTokens,
+    ITransactionRepository transactions,
     IPasswordHasher hasher,
     IEmailSender email,
     InviteOptions options) : IMemberInviteService
@@ -20,8 +23,10 @@ public class MemberInviteService(
     public async Task SendInviteAsync(User user, CancellationToken ct = default)
     {
         var link = await CreateLinkAsync(user, ct);
+        var inviter = await FindInviterAsync(user, ct);
         await email.SendAsync(
-            InviteEmail.Build(user.Name, user.Email, link, options.ExpiryHours),
+            InviteEmail.Build(
+                user.Name, user.Email, link, options.ExpiryHours, inviter?.Name, inviter?.Email),
             ct);
     }
 
@@ -35,11 +40,86 @@ public class MemberInviteService(
             return;
         }
 
+        if (IsPendingInvite(user))
+        {
+            await SendInviteAsync(user, ct);
+            return;
+        }
+
         var link = await CreateLinkAsync(user, ct);
         await email.SendAsync(
             PasswordResetEmail.Build(user.Name, user.Email, link, options.ExpiryHours),
             ct);
     }
+
+    public async Task<InviteTargetDto> ValidateTokenAsync(string token, CancellationToken ct = default)
+    {
+        var user = (await GetUsableTokenAsync(token, ct)).User!;
+        if (!IsPendingInvite(user))
+        {
+            return new InviteTargetDto(user.Name, user.Email, false, null, null);
+        }
+
+        var inviter = await FindInviterAsync(user, ct);
+        return new InviteTargetDto(user.Name, user.Email, true, inviter?.Name, inviter?.Email);
+    }
+
+    public async Task SetPasswordAsync(SetPasswordRequest request, CancellationToken ct = default)
+    {
+        if (request.Password.Length < MinPasswordLength)
+        {
+            throw new ValidationException(
+                $"A senha deve ter ao menos {MinPasswordLength} caracteres.");
+        }
+
+        var entry = await GetUsableTokenAsync(request.Token, ct);
+        var user = entry.User!;
+        var now = DateTime.UtcNow;
+        user.PasswordHash = hasher.Hash(request.Password);
+        entry.UsedAt = now;
+        await refreshTokens.RevokeAllForUserAsync(user.Id, now, ct);
+
+        await users.SaveChangesAsync(ct);
+    }
+
+    public async Task DeclineAsync(string token, CancellationToken ct = default)
+    {
+        var user = (await GetUsableTokenAsync(token, ct)).User!;
+        if (!IsPendingInvite(user))
+        {
+            throw new ValidationException("Este link não é de um convite.");
+        }
+        await ReleasePendingAsync(user, ct);
+    }
+
+    public async Task ReleasePendingAsync(User user, CancellationToken ct = default)
+    {
+        await tokens.InvalidatePendingAsync(user.Id, DateTime.UtcNow, ct);
+        if (await transactions.CountByUserAsync(user.Id, ct) == 0)
+        {
+            users.Remove(user);
+        }
+        else
+        {
+            user.Active = false;
+            user.Email = ReleasedInvite.EmailFor(user.Id);
+        }
+        await users.SaveChangesAsync(ct);
+    }
+
+    public Task InvalidatePendingAsync(Guid userId, CancellationToken ct = default) =>
+        tokens.InvalidatePendingAsync(userId, DateTime.UtcNow, ct);
+
+    private static bool IsPendingInvite(User user) => string.IsNullOrEmpty(user.PasswordHash);
+
+    private async Task<User?> FindInviterAsync(User invitee, CancellationToken ct) =>
+        (await users.ListAsync(invitee.HouseholdId, ct))
+            .Where(u => u.Id != invitee.Id
+                && u.Role == UserRole.Admin
+                && u.Active
+                && !string.IsNullOrEmpty(u.PasswordHash))
+            .OrderBy(u => u.CreatedAt)
+            .FirstOrDefault();
 
     private async Task<string> CreateLinkAsync(User user, CancellationToken ct)
     {
@@ -59,29 +139,6 @@ public class MemberInviteService(
         await tokens.SaveChangesAsync(ct);
 
         return $"{options.FrontendBaseUrl.TrimEnd('/')}/definir-senha?token={Uri.EscapeDataString(raw)}";
-    }
-
-    public async Task<InviteTargetDto> ValidateTokenAsync(string token, CancellationToken ct = default)
-    {
-        var entry = await GetUsableTokenAsync(token, ct);
-        return new InviteTargetDto(entry.User!.Name, entry.User.Email);
-    }
-
-    public async Task SetPasswordAsync(SetPasswordRequest request, CancellationToken ct = default)
-    {
-        if (request.Password.Length < MinPasswordLength)
-        {
-            throw new ValidationException(
-                $"A senha deve ter ao menos {MinPasswordLength} caracteres.");
-        }
-
-        var entry = await GetUsableTokenAsync(request.Token, ct);
-        var user = entry.User!;
-        user.PasswordHash = hasher.Hash(request.Password);
-        entry.UsedAt = DateTime.UtcNow;
-
-        await users.SaveChangesAsync(ct);
-        await tokens.SaveChangesAsync(ct);
     }
 
     private async Task<PasswordSetupToken> GetUsableTokenAsync(string token, CancellationToken ct)

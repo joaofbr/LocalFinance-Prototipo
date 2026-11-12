@@ -34,4 +34,7 @@ export interface RegisterRequest {
 export interface InviteTarget {
   name: string
   email: string
+  isInvite: boolean
+  invitedByName: string | null
+  invitedByEmail: string | null
 }
