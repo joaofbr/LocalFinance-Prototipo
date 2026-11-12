@@ -9,6 +9,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage'
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage'
+import { CardsPage } from '@/features/cards/pages/CardsPage'
 import { MembersPage } from '@/features/members/pages/MembersPage'
 import { FamilyModePage } from '@/features/household/pages/FamilyModePage'
 import { ConsolePage } from '@/features/platform/pages/ConsolePage'
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/cards" element={<CardsPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/modo-familia" element={<FamilyModePage />} />
           <Route path="/console" element={<ConsolePage />} />

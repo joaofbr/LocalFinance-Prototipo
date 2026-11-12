@@ -42,7 +42,7 @@ Não existe projeto de testes. Antes de entregar mudança no backend, rode `dotn
 ## Multi-tenant: famílias (`Household`)
 
 Cada cadastro cria um `Household` isolado, com o usuário como Admin e as 11 categorias de
-`Application/Common/DefaultCategories.cs`, tudo num único `SaveChanges`. `User`, `Category` e
+`Application/Common/DefaultCategories.cs`, tudo num único `SaveChanges`. `User`, `Category`, `Card` e
 `Transaction` têm `HouseholdId`.
 
 Regras para não vazar dados entre contas:
@@ -124,6 +124,25 @@ Regras para não vazar dados entre contas:
 - A data padrão do novo lançamento segue o mês selecionado (`defaultDateInPeriod`); datas locais,
   nunca `toISOString()` (que usa UTC e vira o dia à noite no Brasil).
 
+## Cartão de crédito
+
+- `Card` (nome, dia de fechamento, dia de vencimento, dono opcional: `OwnerId` nulo = "da família").
+  Cartão não se exclui, só se arquiva; lançamento com cartão arquivado continua editável.
+- Só despesa vai no cartão. A compra fica com a **data real** (`Date`) e conta no **mês da fatura**
+  (`Transaction.ReferenceMonth`, sempre dia 1). Listas, totais e relatórios usam `ReferenceMonth`,
+  nunca `Date`. Sem cartão, `ReferenceMonth` é o mês da data.
+- Regra (`Domain/Billing/CardBilling.cs`): compra antes do dia de fechamento entra no fechamento do mês;
+  no dia ou depois, no seguinte. Fechamento 31 em fevereiro vale o último dia do mês. Se o vencimento é
+  depois do fechamento, a fatura vence no mesmo mês do fechamento; senão, no mês seguinte.
+- Parcelado no cartão: a parcela k fica na fatura da compra + (k−1). Sempre ancore na data da compra
+  (parcela 1), nunca recalcule a partir da data de uma parcela: dia 29–31 vira dia 28 em fevereiro e
+  joga duas parcelas na mesma fatura. Fixo mensal calcula cada ocorrência pela própria data.
+- Editar recalcula `ReferenceMonth` só se o cartão mudou ou se a data da ocorrência editada mudou.
+- "Atribuir a um cartão" (`POST /api/transactions/assign-card`) só grava o `CardId` e **mantém o mês**:
+  serve para quem já lançava a compra no mês do pagamento.
+- `features/cards/billing.ts` espelha a regra para a dica do formulário e o resumo de faturas. Mudou
+  `CardBilling.cs`? Mude o espelho junto.
+
 ## Migrations
 
 - O startup aplica as migrations **automaticamente em qualquer ambiente**, inclusive no banco real.
@@ -135,6 +154,9 @@ Regras para não vazar dados entre contas:
   - Teste contra uma base com dados no formato antigo antes de rodar no banco real. Sem Docker,
     `npm i embedded-postgres` sobe um Postgres descartável.
   - Faça backup antes de subir uma migration estrutural.
+  - Se a API local aponta para o mesmo banco da produção, rodá-la com uma migration nova muda o banco
+    antes do deploy, e o código antigo no ar pode quebrar (por exemplo, `ReferenceMonth` é NOT NULL sem
+    default: o código antigo não consegue mais gravar lançamento). Faça o deploy logo em seguida.
 - `20261111161047_Households.Down` lança `NotSupportedException` de propósito: desfazer juntaria os
   dados de todas as contas num espaço só. Volte por backup.
 

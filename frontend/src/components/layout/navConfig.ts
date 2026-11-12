@@ -34,11 +34,16 @@ const FAMILY_MODE_ITEM: NavItem = {
   plan: 'individual',
 }
 
+const CATEGORIES_ITEM: NavItem = { to: '/categories', label: 'Categorias', icon: 'tag' }
+
+const CARDS_ITEM: NavItem = { to: '/cards', label: 'Cartões', icon: 'creditCard' }
+
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: 'grid' },
   { to: '/transactions', label: 'Transações', icon: 'list' },
   { to: '/reports', label: 'Relatórios', icon: 'barChart' },
-  { to: '/categories', label: 'Categorias', icon: 'tag' },
+  CATEGORIES_ITEM,
+  CARDS_ITEM,
   MEMBERS_ITEM,
   FAMILY_MODE_ITEM,
   { to: '/profile', label: 'Perfil', icon: 'user' },
@@ -46,7 +51,8 @@ export const NAV_ITEMS: NavItem[] = [
 ]
 
 export const MORE_NAV_ITEMS: NavItem[] = [
-  { to: '/categories', label: 'Categorias', icon: 'tag' },
+  CATEGORIES_ITEM,
+  CARDS_ITEM,
   MEMBERS_ITEM,
   FAMILY_MODE_ITEM,
   { to: '/profile', label: 'Perfil', icon: 'user' },
@@ -81,6 +87,7 @@ const TITLES: Record<string, string> = {
   '/transactions': 'Transações',
   '/reports': 'Relatórios',
   '/categories': 'Categorias',
+  '/cards': 'Cartões',
   '/members': 'Integrantes',
   '/modo-familia': 'Modo família',
   '/console': 'Console',

@@ -65,6 +65,7 @@ public class HouseholdRepository(AppDbContext db) : IHouseholdRepository
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.Transactions.Where(t => t.HouseholdId == id).ExecuteDeleteAsync(ct);
+        await db.Cards.Where(c => c.HouseholdId == id).ExecuteDeleteAsync(ct);
         await db.Categories.Where(c => c.HouseholdId == id).ExecuteDeleteAsync(ct);
         await db.Users.Where(u => u.HouseholdId == id).ExecuteDeleteAsync(ct);
         await db.Households.Where(h => h.Id == id).ExecuteDeleteAsync(ct);

@@ -1,6 +1,7 @@
 using LocalFinance.Application.Common;
 using LocalFinance.Application.Dtos;
 using LocalFinance.Application.Interfaces;
+using LocalFinance.Domain.Billing;
 using LocalFinance.Domain.Entities;
 using LocalFinance.Domain.Enums;
 using LocalFinance.Domain.Repositories;
@@ -10,9 +11,12 @@ namespace LocalFinance.Application.Services;
 public class TransactionService(
     ITransactionRepository transactions,
     ICategoryRepository categories,
+    ICardRepository cards,
     IUserRepository users) : ITransactionService
 {
     private const int MaxRepeat = 60;
+
+    private sealed record Placement(DateOnly Date, DateOnly ReferenceMonth, Guid? CardId);
 
     public async Task<List<TransactionDto>> ListByMonthAsync(
         Guid householdId, int year, int month, CancellationToken ct = default)
@@ -35,6 +39,9 @@ public class TransactionService(
         var participants = await ResolveParticipantsAsync(householdId, input.MemberIds, ct);
         var template = new Transaction { HouseholdId = householdId };
         await ApplyAsync(householdId, template, input, ct);
+        var card = await ResolveCardAsync(householdId, input.CardId, template.Type, null, ct);
+        template.CardId = card?.Id;
+        template.ReferenceMonth = CardBilling.ReferenceMonth(card, template.Date);
 
         var kind = months > 1 ? EnumMapping.ParseSeriesKind(input.RepeatMode) : (SeriesKind?)null;
         if (kind == SeriesKind.Installment && template.Type == TransactionType.Income)
@@ -59,6 +66,10 @@ public class TransactionService(
                 ? SliceOf(template.Amount, months, m)
                 : template.Amount;
 
+            var date = template.Date.AddMonths(m);
+            var reference = kind == SeriesKind.Installment
+                ? CardBilling.ReferenceMonth(card, template.Date, m)
+                : CardBilling.ReferenceMonth(card, date);
             for (var p = 0; p < participants.Count; p++)
             {
                 batch.Add(new Transaction
@@ -66,7 +77,9 @@ public class TransactionService(
                     HouseholdId = householdId,
                     Type = template.Type,
                     Amount = SliceOf(monthAmount, participants.Count, p),
-                    Date = template.Date.AddMonths(m),
+                    Date = date,
+                    ReferenceMonth = reference,
+                    CardId = card?.Id,
                     CategoryId = template.CategoryId,
                     UserId = participants[p],
                     Description = template.Description,
@@ -97,12 +110,17 @@ public class TransactionService(
         {
             throw new ValidationException("Receitas não podem ser parceladas.");
         }
+        var card = await ResolveCardAsync(householdId, input.CardId, template.Type, transaction.CardId, ct);
+        var cardChanged = transaction.CardId != card?.Id;
+        var dateChanged = transaction.Date != template.Date;
 
-        var reached = await ResolveScopeAsync(householdId, transaction, scope, ct);
+        var series = await LoadSeriesAsync(householdId, transaction, ct);
+        var reached = InScope(series, transaction, scope);
         if (reached.Count == 0)
         {
             reached = [transaction];
         }
+        var firstInstallmentDate = series.FirstOrDefault(t => t.SeriesIndex == 1)?.Date;
 
         var targetIndex = transaction.SeriesIndex;
         var previousTotal = reached.Where(t => t.SeriesIndex == targetIndex).Sum(t => t.Amount);
@@ -118,8 +136,13 @@ public class TransactionService(
                 ? template.Amount
                 : parts.Sum(t => t.Amount);
             var date = isTarget ? template.Date : parts[0].Date;
+            var dateEdited = isTarget && dateChanged;
+            var reference = cardChanged || dateEdited
+                ? ReferenceFor(card, parts[0], date, dateEdited ? null : firstInstallmentDate)
+                : parts[0].ReferenceMonth;
 
-            var assigned = await RedistributeAsync(parts, participants, template, total, date, seriesId, ct);
+            var assigned = await RedistributeAsync(
+                parts, participants, template, total, new Placement(date, reference, card?.Id), seriesId, ct);
             if (isTarget)
             {
                 edited = assigned[0];
@@ -135,7 +158,7 @@ public class TransactionService(
         List<Guid> participants,
         Transaction template,
         decimal total,
-        DateOnly date,
+        Placement placement,
         Guid? seriesId,
         CancellationToken ct)
     {
@@ -165,7 +188,9 @@ public class TransactionService(
             part.Type = template.Type;
             part.CategoryId = template.CategoryId;
             part.Description = template.Description;
-            part.Date = date;
+            part.Date = placement.Date;
+            part.ReferenceMonth = placement.ReferenceMonth;
+            part.CardId = placement.CardId;
             part.Amount = SliceOf(total, participants.Count, i);
             part.SeriesId = seriesId;
             if (seriesId is not null)
@@ -193,7 +218,8 @@ public class TransactionService(
         Guid householdId, Guid id, string? scope = null, CancellationToken ct = default)
     {
         var transaction = await GetOrThrowAsync(householdId, id, ct);
-        var reached = await ResolveScopeAsync(householdId, transaction, scope, ct);
+        var series = await LoadSeriesAsync(householdId, transaction, ct);
+        var reached = InScope(series, transaction, scope);
 
         if (reached.Count > 0)
         {
@@ -207,15 +233,93 @@ public class TransactionService(
         await transactions.SaveChangesAsync(ct);
     }
 
-    private async Task<List<Transaction>> ResolveScopeAsync(
-        Guid householdId, Transaction transaction, string? scope, CancellationToken ct)
+    public async Task AssignCardAsync(
+        Guid householdId, AssignCardInput input, CancellationToken ct = default)
     {
-        if (transaction.SeriesId is not Guid seriesId)
+        var ids = new List<Guid>();
+        foreach (var raw in input.TransactionIds ?? [])
+        {
+            if (!Guid.TryParse(raw, out var id))
+            {
+                throw new NotFoundException("Lançamento não encontrado.");
+            }
+            if (!ids.Contains(id))
+            {
+                ids.Add(id);
+            }
+        }
+        if (ids.Count == 0)
+        {
+            throw new ValidationException("Selecione ao menos um lançamento.");
+        }
+
+        var found = await transactions.ListByIdsAsync(householdId, ids, ct);
+        if (found.Count != ids.Count)
+        {
+            throw new NotFoundException("Lançamento não encontrado.");
+        }
+        var card = await ResolveCardAsync(householdId, input.CardId, TransactionType.Expense, null, ct)
+            ?? throw new ValidationException("Escolha um cartão.");
+        if (found.Any(t => t.Type != TransactionType.Expense))
+        {
+            throw new ValidationException("Cartão de crédito vale só para despesas.");
+        }
+
+        foreach (var transaction in found)
+        {
+            transaction.CardId = card.Id;
+        }
+        await transactions.SaveChangesAsync(ct);
+    }
+
+    private async Task<Card?> ResolveCardAsync(
+        Guid householdId, string? cardId, TransactionType type, Guid? currentCardId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(cardId))
+        {
+            return null;
+        }
+        if (!Guid.TryParse(cardId, out var id)
+            || await cards.GetByIdAsync(householdId, id, ct) is not Card card)
+        {
+            throw new ValidationException("Cartão não encontrado.");
+        }
+        if (type != TransactionType.Expense)
+        {
+            throw new ValidationException("Cartão de crédito vale só para despesas.");
+        }
+        if (!card.Active && card.Id != currentCardId)
+        {
+            throw new ValidationException("Este cartão está arquivado.");
+        }
+        return card;
+    }
+
+    private static DateOnly ReferenceFor(
+        Card? card, Transaction occurrence, DateOnly date, DateOnly? firstInstallmentDate)
+    {
+        if (occurrence.SeriesKind != SeriesKind.Installment || occurrence.SeriesIndex is not > 1)
+        {
+            return CardBilling.ReferenceMonth(card, date);
+        }
+        var monthsAfter = occurrence.SeriesIndex.Value - 1;
+        var purchase = firstInstallmentDate ?? date.AddMonths(-monthsAfter);
+        return CardBilling.ReferenceMonth(card, purchase, monthsAfter);
+    }
+
+    private async Task<List<Transaction>> LoadSeriesAsync(
+        Guid householdId, Transaction transaction, CancellationToken ct) =>
+        transaction.SeriesId is Guid seriesId
+            ? await transactions.ListBySeriesAsync(householdId, seriesId, ct)
+            : [];
+
+    private static List<Transaction> InScope(
+        List<Transaction> series, Transaction transaction, string? scope)
+    {
+        if (series.Count == 0)
         {
             return [];
         }
-
-        var series = await transactions.ListBySeriesAsync(householdId, seriesId, ct);
 
         return (scope ?? "one").ToLowerInvariant() switch
         {
@@ -300,9 +404,11 @@ public class TransactionService(
         transaction.Type.ToDto(),
         transaction.Amount,
         transaction.Date,
+        transaction.ReferenceMonth,
         transaction.CategoryId.ToString(),
         transaction.UserId.ToString(),
         transaction.Description,
+        transaction.CardId?.ToString(),
         transaction.SeriesId?.ToString(),
         transaction.SeriesKind?.ToDto(),
         transaction.SeriesIndex,

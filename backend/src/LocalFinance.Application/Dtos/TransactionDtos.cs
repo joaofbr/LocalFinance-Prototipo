@@ -5,9 +5,11 @@ public record TransactionDto(
     string Type,
     decimal Amount,
     DateOnly Date,
+    DateOnly ReferenceMonth,
     string CategoryId,
     string MemberId,
     string Description,
+    string? CardId,
     string? SeriesId = null,
     string? SeriesKind = null,
     int? SeriesIndex = null,
@@ -22,4 +24,7 @@ public record TransactionInput(
     List<string> MemberIds,
     string Description,
     int Repeat = 1,
-    string RepeatMode = "installment");
+    string RepeatMode = "installment",
+    string? CardId = null);
+
+public record AssignCardInput(string CardId, List<string> TransactionIds);

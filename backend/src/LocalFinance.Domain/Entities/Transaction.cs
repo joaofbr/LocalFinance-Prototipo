@@ -9,6 +9,8 @@ public class Transaction
     public TransactionType Type { get; set; } = TransactionType.Expense;
     public decimal Amount { get; set; }
     public DateOnly Date { get; set; }
+    public DateOnly ReferenceMonth { get; set; }
+    public Guid? CardId { get; set; }
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
     public Category? Category { get; set; }

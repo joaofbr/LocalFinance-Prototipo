@@ -22,6 +22,13 @@ public class TransactionsController(ITransactionService service) : ControllerBas
     public async Task<TransactionDto> Create(TransactionInput input, CancellationToken ct) =>
         await service.CreateAsync(User.HouseholdId(), input, ct);
 
+    [HttpPost("assign-card")]
+    public async Task<IActionResult> AssignCard(AssignCardInput input, CancellationToken ct)
+    {
+        await service.AssignCardAsync(User.HouseholdId(), input, ct);
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}")]
     public async Task<TransactionDto> Update(
         Guid id,

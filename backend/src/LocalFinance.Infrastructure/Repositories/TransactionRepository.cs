@@ -15,10 +15,9 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
     public Task<List<Transaction>> ListByMonthAsync(
         Guid householdId, int year, int month, CancellationToken ct = default)
     {
-        var from = new DateOnly(year, month, 1);
-        var to = from.AddMonths(1);
+        var reference = new DateOnly(year, month, 1);
         return db.Transactions
-            .Where(t => t.HouseholdId == householdId && t.Date >= from && t.Date < to)
+            .Where(t => t.HouseholdId == householdId && t.ReferenceMonth == reference)
             .OrderByDescending(t => t.Date)
             .ThenByDescending(t => t.CreatedAt)
             .ToListAsync(ct);
@@ -45,8 +44,10 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
         CancellationToken ct = default)
     {
         var totals = await db.Transactions
-            .Where(t => t.HouseholdId == householdId && t.Date >= from && t.Date <= to)
-            .GroupBy(t => new { t.Date.Year, t.Date.Month })
+            .Where(t => t.HouseholdId == householdId
+                && t.ReferenceMonth >= from
+                && t.ReferenceMonth <= to)
+            .GroupBy(t => new { t.ReferenceMonth.Year, t.ReferenceMonth.Month })
             .Select(g => new
             {
                 g.Key.Year,
@@ -65,6 +66,12 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
         db.Transactions
             .Where(t => t.HouseholdId == householdId && t.SeriesId == seriesId)
             .OrderBy(t => t.SeriesIndex)
+            .ToListAsync(ct);
+
+    public Task<List<Transaction>> ListByIdsAsync(
+        Guid householdId, IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
+        db.Transactions
+            .Where(t => t.HouseholdId == householdId && ids.Contains(t.Id))
             .ToListAsync(ct);
 
     public async Task AddAsync(Transaction transaction, CancellationToken ct = default) =>

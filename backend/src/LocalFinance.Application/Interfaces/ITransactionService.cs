@@ -12,4 +12,5 @@ public interface ITransactionService
         Guid householdId, Guid id, TransactionInput input, string? scope = null,
         CancellationToken ct = default);
     Task DeleteAsync(Guid householdId, Guid id, string? scope = null, CancellationToken ct = default);
+    Task AssignCardAsync(Guid householdId, AssignCardInput input, CancellationToken ct = default);
 }

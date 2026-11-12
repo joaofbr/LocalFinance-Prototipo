@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
 import { formatCents, hexToRgba } from '@/lib/format'
+import { billDates, billLabel, monthOfIso, referenceMonth } from '@/features/cards/billing'
+import type { Card } from '@/features/cards/types'
 import { AmountInput } from './AmountInput'
 import type { TransactionEntry } from '../transactionEntries'
 import type {
@@ -16,6 +18,8 @@ interface TransactionFormSheetProps {
   defaultDate: string
   categories: Category[]
   members: Member[]
+  cards: Card[]
+  defaultCardId: string
   hasFamily: boolean
   currentUserId: string
   saving: boolean
@@ -33,6 +37,8 @@ export function TransactionFormSheet({
   defaultDate,
   categories,
   members,
+  cards,
+  defaultCardId,
   hasFamily,
   currentUserId,
   saving,
@@ -50,6 +56,8 @@ export function TransactionFormSheet({
   const [memberIds, setMemberIds] = useState<string[]>(() =>
     editing ? editing.memberIds : currentUserId ? [currentUserId] : [],
   )
+  const [membersTouched, setMembersTouched] = useState(false)
+  const [cardId, setCardId] = useState(original ? (original.cardId ?? '') : defaultCardId)
   const [description, setDescription] = useState(original?.description ?? '')
   const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>('none')
   const [repeat, setRepeat] = useState(12)
@@ -69,6 +77,7 @@ export function TransactionFormSheet({
 
   const toggleMember = (id: string) => {
     setErrors((e) => ({ ...e, members: undefined }))
+    setMembersTouched(true)
     setMemberIds((current) =>
       current.includes(id)
         ? current.filter((m) => m !== id)
@@ -80,11 +89,27 @@ export function TransactionFormSheet({
   const repeating = canRepeat && repeatMode !== 'none'
   const splitting = repeating && repeatMode === 'installment'
 
+  const paymentCards = cards.filter((c) => c.active || c.id === original?.cardId)
+  const showPayment = type === 'expense' && paymentCards.length > 0
+  const selectedCard =
+    type === 'expense' ? (paymentCards.find((c) => c.id === cardId) ?? null) : null
+
+  const choosePayment = (nextCardId: string) => {
+    setCardId(nextCardId)
+    const owner = cards.find((c) => c.id === nextCardId)?.ownerId
+    const ownerActive = members.some((m) => m.id === owner && m.active)
+    if (!editing && showMembers && !membersTouched && owner && ownerActive) {
+      setMemberIds([owner])
+      setErrors((e) => ({ ...e, members: undefined }))
+    }
+  }
+
   const changeType = (next: TransactionType) => {
     setType(next)
     setCategoryId('')
-    if (next === 'income' && repeatMode === 'installment') {
-      setRepeatMode('none')
+    if (next === 'income') {
+      setCardId('')
+      if (repeatMode === 'installment') setRepeatMode('none')
     }
     setErrors((e) => ({ ...e, category: undefined }))
   }
@@ -110,8 +135,26 @@ export function TransactionFormSheet({
       description: description.trim() || category?.name || 'Lançamento',
       repeat: repeating ? repeat : 1,
       repeatMode: repeating ? repeatMode : undefined,
+      cardId: type === 'expense' && cardId ? cardId : null,
     })
   }
+
+  const billHint = (() => {
+    if (!selectedCard || !date) return null
+    const unchanged =
+      original && original.cardId === selectedCard.id && original.date === date
+    const reference = unchanged
+      ? monthOfIso(original.referenceMonth)
+      : referenceMonth(
+          selectedCard,
+          date,
+          original?.seriesKind ?? null,
+          original?.seriesIndex ?? null,
+        )
+    const { due } = billDates(selectedCard, reference)
+    const lead = splitting ? 'A 1ª parcela entra na fatura de' : 'Entra na fatura de'
+    return { lead, bill: billLabel(reference), due }
+  })()
 
   return (
     <div
@@ -256,13 +299,38 @@ export function TransactionFormSheet({
             </div>
           )}
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <div className="min-w-0 flex-1">
+          {showPayment && (
+            <>
+              <label
+                htmlFor="payment"
+                className="mb-1.5 mt-4 block text-[13px] font-semibold text-text-2"
+              >
+                Pagamento
+              </label>
+              <select
+                id="payment"
+                value={selectedCard?.id ?? ''}
+                onChange={(e) => choosePayment(e.target.value)}
+                className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+              >
+                <option value="">À vista (Pix, débito, dinheiro)</option>
+                {paymentCards.map((card) => (
+                  <option key={card.id} value={card.id}>
+                    Cartão {card.name}
+                    {card.active ? '' : ' (arquivado)'}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="order-1 min-w-0 flex-1">
               <label
                 htmlFor="date"
                 className="mb-1.5 block text-[13px] font-semibold text-text-2"
               >
-                Data
+                {selectedCard ? 'Data da compra' : 'Data'}
               </label>
               <input
                 id="date"
@@ -273,7 +341,7 @@ export function TransactionFormSheet({
               />
             </div>
             {canRepeat && (
-              <div className="min-w-0 flex-1">
+              <div className="order-3 min-w-0 flex-1 sm:order-2">
                 <label
                   htmlFor="repeatMode"
                   className="mb-1.5 block text-[13px] font-semibold text-text-2"
@@ -295,6 +363,16 @@ export function TransactionFormSheet({
                   )}
                 </select>
               </div>
+            )}
+            {billHint && (
+              <p className="order-2 -mt-1 flex items-start gap-1.5 text-[12.5px] leading-relaxed text-text-2 sm:order-3 sm:basis-full">
+                <Icon name="creditCard" size={15} className="mt-[2px] flex-shrink-0 text-text-3" />
+                <span>
+                  {billHint.lead}{' '}
+                  <strong className="font-semibold text-text">{billHint.bill}</strong>, que
+                  vence em {billHint.due}.
+                </span>
+              </p>
             )}
           </div>
 

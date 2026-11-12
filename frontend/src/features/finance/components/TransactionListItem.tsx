@@ -18,6 +18,7 @@ interface TransactionListItemProps {
   category?: Pick<Category, 'name' | 'color' | 'icon'>
   participants: Participant[]
   showParticipants: boolean
+  cardName?: string
   onEdit: () => void
   onDelete: () => void
 }
@@ -39,6 +40,7 @@ export function TransactionListItem({
   category = FALLBACK_CATEGORY,
   participants,
   showParticipants,
+  cardName,
   onEdit,
   onDelete,
 }: TransactionListItemProps) {
@@ -93,6 +95,7 @@ export function TransactionListItem({
                 <span className="hidden sm:inline">{names} · </span>
               )}
               {category.name} · {formatDateShort(transaction.date)}
+              {cardName && ` · ${cardName}`}
             </span>
           </span>
         </span>

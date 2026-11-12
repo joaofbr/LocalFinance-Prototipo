@@ -22,6 +22,44 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LocalFinance.Domain.Entities.Card", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ClosingDay")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DueDay")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Cards");
+                });
+
             modelBuilder.Entity("LocalFinance.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -167,6 +205,9 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<Guid?>("CardId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
@@ -183,6 +224,9 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("ReferenceMonth")
+                        .HasColumnType("date");
 
                     b.Property<Guid?>("SeriesId")
                         .HasColumnType("uuid");
@@ -210,13 +254,15 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CardId");
+
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("SeriesId");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("HouseholdId", "Date");
+                    b.HasIndex("HouseholdId", "ReferenceMonth");
 
                     b.ToTable("Transactions");
                 });
@@ -271,6 +317,20 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("LocalFinance.Domain.Entities.Card", b =>
+                {
+                    b.HasOne("LocalFinance.Domain.Entities.Household", null)
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LocalFinance.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("LocalFinance.Domain.Entities.Category", b =>
                 {
                     b.HasOne("LocalFinance.Domain.Entities.Household", null)
@@ -304,6 +364,11 @@ namespace LocalFinance.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("LocalFinance.Domain.Entities.Transaction", b =>
                 {
+                    b.HasOne("LocalFinance.Domain.Entities.Card", null)
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("LocalFinance.Domain.Entities.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")

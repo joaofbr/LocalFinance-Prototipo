@@ -189,6 +189,11 @@ const ICONS = {
     ['path', { d: 'M3 12 12 3h8v8l-9 9z' }],
     ['circle', { cx: 16, cy: 8, r: 1.2 }],
   ],
+  creditCard: [
+    ['rect', { x: 2.5, y: 5, width: 19, height: 14, rx: 2 }],
+    ['path', { d: 'M2.5 10h19' }],
+    ['path', { d: 'M6.5 15h4' }],
+  ],
 } satisfies Record<string, SvgChild[]>
 
 export type IconName = keyof typeof ICONS

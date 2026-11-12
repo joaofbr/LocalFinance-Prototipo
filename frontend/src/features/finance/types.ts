@@ -25,9 +25,11 @@ export interface Transaction {
   type: TransactionType
   amount: number
   date: string
+  referenceMonth: string
   categoryId: string
   memberId: string
   description: string
+  cardId: string | null
   seriesId?: string | null
   seriesKind?: SeriesKind | null
   seriesIndex?: number | null
@@ -55,6 +57,7 @@ export interface TransactionInput {
   description: string
   repeat?: number
   repeatMode?: SeriesKind
+  cardId?: string | null
 }
 
 export type HouseholdPlan = 'individual' | 'family'

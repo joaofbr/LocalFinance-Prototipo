@@ -84,9 +84,11 @@ const DEMO_EXPENSES: Transaction[] = [
   type: 'expense',
   amount: Number(amount),
   date: '2026-11-10',
+  referenceMonth: '2026-11-01',
   categoryId: String(categoryId),
   memberId: 'demo',
   description: String(categoryId),
+  cardId: null,
 }))
 
 export function CategoriesPreview() {

@@ -10,8 +10,13 @@ import { MonthSelector } from '@/features/finance/components/MonthSelector'
 import { FilterBar } from '@/features/finance/components/FilterBar'
 import {
   DEFAULT_FILTERS,
+  hasActiveFilters,
+  matchesPayment,
   type TransactionFilters,
 } from '@/features/finance/transactionFilters'
+import { AssignCardSheet } from '@/features/cards/components/AssignCardSheet'
+import { BillSummary } from '@/features/cards/components/BillSummary'
+import { useCards } from '@/features/cards/hooks'
 import { TransactionListItem } from '@/features/finance/components/TransactionListItem'
 import { usePeriod } from '@/features/finance/PeriodContext'
 import { useTransactionSheet } from '@/features/finance/TransactionSheetProvider'
@@ -31,10 +36,12 @@ export function TransactionsPage() {
   const { year, month, label } = usePeriod()
   const { openNew, openEdit, requestDelete } = useTransactionSheet()
   const [filters, setFilters] = useState<TransactionFilters>(DEFAULT_FILTERS)
+  const [assigning, setAssigning] = useState(false)
 
   const transactionsQuery = useMonthlyTransactions(year, month)
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
+  const cards = useCards().data ?? []
   const hasFamily = useHasFamily()
 
   const isLoading =
@@ -42,23 +49,27 @@ export function TransactionsPage() {
     categoriesQuery.isLoading ||
     membersQuery.isLoading
   const isError = transactionsQuery.isError || categoriesQuery.isError
-  const filtering =
-    filters.type !== 'all' ||
-    filters.categoryId !== 'all' ||
-    filters.memberId !== 'all'
+  const filtering = hasActiveFilters(filters)
 
   const categories = categoriesQuery.data ?? []
   const members = membersQuery.data ?? []
   const categoryById = new Map(categories.map((c) => [c.id, c]))
+  const cardNameById = new Map(cards.map((c) => [c.id, c.name]))
+  const activeCards = cards.filter((c) => c.active)
 
-  const rows = groupTransactions(transactionsQuery.data ?? [])
+  const entries = groupTransactions(transactionsQuery.data ?? [])
+  const cashExpenses = entries.filter(
+    ({ transaction: t }) => t.type === 'expense' && !t.cardId,
+  )
+
+  const rows = entries
     .filter(({ transaction: t, memberIds }) => {
       if (filters.type !== 'all' && t.type !== filters.type) return false
       if (filters.categoryId !== 'all' && t.categoryId !== filters.categoryId)
         return false
       if (filters.memberId !== 'all' && !memberIds.includes(filters.memberId))
         return false
-      return true
+      return matchesPayment(t, filters.payment)
     })
     .map((entry) => ({
       entry,
@@ -81,11 +92,25 @@ export function TransactionsPage() {
         </Button>
       </div>
 
+      {cards.length > 0 && !isLoading && !isError && (
+        <BillSummary
+          cards={cards}
+          entries={entries}
+          period={{ year, month }}
+          periodLabel={label}
+          selectedCardId={filters.payment}
+          canAssign={activeCards.length > 0 && cashExpenses.length > 0}
+          onSelect={(payment) => setFilters({ ...filters, payment })}
+          onAssign={() => setAssigning(true)}
+        />
+      )}
+
       <FilterBar
         filters={filters}
         onChange={setFilters}
         categories={categories}
         members={members}
+        cards={cards}
         showMembers={hasFamily}
       />
 
@@ -144,6 +169,11 @@ export function TransactionsPage() {
                     entry.memberIds.includes(m.id),
                   )}
                   showParticipants={hasFamily}
+                  cardName={
+                    entry.transaction.cardId
+                      ? cardNameById.get(entry.transaction.cardId)
+                      : undefined
+                  }
                   onEdit={() => openEdit(entry)}
                   onDelete={() => requestDelete(entry.transaction)}
                 />
@@ -168,6 +198,16 @@ export function TransactionsPage() {
           </>
         )}
       </div>
+
+      {assigning && (
+        <AssignCardSheet
+          cards={activeCards}
+          entries={cashExpenses}
+          categories={categories}
+          periodLabel={label}
+          onClose={() => setAssigning(false)}
+        />
+      )}
     </div>
   )
 }

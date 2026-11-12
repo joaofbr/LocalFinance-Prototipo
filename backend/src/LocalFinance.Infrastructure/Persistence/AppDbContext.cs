@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<Card> Cards => Set<Card>();
     public DbSet<PasswordSetupToken> PasswordSetupTokens => Set<PasswordSetupToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
@@ -46,6 +47,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<Card>(entity =>
+        {
+            entity.Property(c => c.Name).HasMaxLength(60);
+            entity.HasIndex(c => c.HouseholdId);
+            entity.HasOne<Household>()
+                .WithMany()
+                .HasForeignKey(c => c.HouseholdId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(c => c.OwnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<PasswordSetupToken>(entity =>
         {
             entity.Property(t => t.TokenHash).HasMaxLength(64);
@@ -71,11 +86,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(10);
             entity.Property(t => t.Amount).HasPrecision(18, 2);
             entity.Property(t => t.Description).HasMaxLength(200);
-            entity.HasIndex(t => new { t.HouseholdId, t.Date });
+            entity.HasIndex(t => new { t.HouseholdId, t.ReferenceMonth });
             entity.HasIndex(t => t.SeriesId);
             entity.HasOne<Household>()
                 .WithMany()
                 .HasForeignKey(t => t.HouseholdId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Card>()
+                .WithMany()
+                .HasForeignKey(t => t.CardId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.Property(t => t.SeriesKind).HasConversion<string>().HasMaxLength(12);
             entity.HasOne(t => t.Category)

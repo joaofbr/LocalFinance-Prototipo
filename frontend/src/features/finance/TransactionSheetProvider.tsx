@@ -5,6 +5,9 @@ import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/features/auth/useAuth'
 import { getApiErrorMessage } from '@/lib/apiError'
 import { defaultDateInPeriod } from '@/lib/format'
+import { billLabel, billMonth } from '@/features/cards/billing'
+import { useCards } from '@/features/cards/hooks'
+import { readLastCardId, rememberLastCardId } from '@/features/cards/lastCard'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
 import { SeriesScopeDialog } from './components/SeriesScopeDialog'
 import { usePeriod } from './PeriodContext'
@@ -51,6 +54,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
   const { year, month } = usePeriod()
   const categoriesQuery = useCategories()
   const membersQuery = useMembers()
+  const cards = useCards().data ?? []
   const hasFamily = useHasFamily()
   const createMutation = useCreateTransaction()
   const updateMutation = useUpdateTransaction()
@@ -106,6 +110,25 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
     )
 
   const isSeries = (pendingDelete?.seriesTotal ?? 1) > 1
+  const userId = user?.id ?? ''
+  const lastCardId = readLastCardId(userId)
+  const defaultCardId = cards.some((c) => c.active && c.id === lastCardId) ? lastCardId : ''
+
+  const create = (input: TransactionInput) => {
+    const card = cards.find((c) => c.id === input.cardId)
+    createMutation.mutate(input, {
+      onSuccess: () => {
+        close()
+        if (input.type === 'expense') rememberLastCardId(userId, card?.id ?? '')
+        showToast(
+          card
+            ? `Lançamento salvo na fatura de ${billLabel(billMonth(card, input.date))}`
+            : 'Lançamento salvo',
+        )
+      },
+      onError: showError('Não foi possível salvar o lançamento'),
+    })
+  }
 
   return (
     <TransactionSheetContext.Provider
@@ -124,8 +147,10 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
           defaultDate={defaultDateInPeriod(year, month)}
           categories={categoriesQuery.data ?? []}
           members={membersQuery.data ?? []}
+          cards={cards}
+          defaultCardId={defaultCardId}
           hasFamily={hasFamily}
-          currentUserId={user?.id ?? ''}
+          currentUserId={userId}
           saving={saving}
           onClose={close}
           onDelete={
@@ -133,13 +158,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
           }
           onSubmit={(input) => {
             if (!editing) {
-              createMutation.mutate(input, {
-                onSuccess: () => {
-                  close()
-                  showToast('Lançamento salvo')
-                },
-                onError: showError('Não foi possível salvar o lançamento'),
-              })
+              create(input)
               return
             }
             const { transaction } = editing
