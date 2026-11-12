@@ -176,6 +176,9 @@ Regras para não vazar dados entre contas:
 - Números grandes isolados sem `tabular-nums`; `tabular-nums` só onde números se alinham em coluna.
 - Textos: use `plural()` (nunca "lançamento(s)"); valores negativos com o sinal de menos `−`.
 - O cabeçalho do app já mostra o título da página: não repita o título num `h2` dentro dela.
+- Select é sempre `components/ui/Select` (nunca `<select>` solto): seta própria, 46px nos formulários e
+  `compact` (38px) em filtros, com `highlighted` quando o filtro está ativo. Inputs ao lado usam a
+  mesma altura. Os temas definem `color-scheme`, para a lista aberta e o calendário seguirem o tema.
 - Toda tela que carrega dados trata erro com `QueryError` ("Tentar de novo"), em vez de parecer vazia.
 - Celular (390px):
   - Linha de lista é um botão que abre a edição; nada de ícones de ação espremendo o texto.

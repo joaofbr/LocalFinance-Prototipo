@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { Select } from '@/components/ui/Select'
 import { useToast } from '@/components/ui/ToastProvider'
 import { getApiErrorMessage } from '@/lib/apiError'
 import { formatDateShort, formatMoney, plural } from '@/lib/format'
@@ -96,18 +97,18 @@ export function AssignCardSheet({
           <label htmlFor="assign-card" className="mb-1.5 block text-[13px] font-semibold text-text-2">
             Cartão
           </label>
-          <select
+          <Select
             id="assign-card"
             value={cardId}
             onChange={(e) => setCardId(e.target.value)}
-            className="mb-4 w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+            className="mb-4"
           >
             {cards.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.name}
               </option>
             ))}
-          </select>
+          </Select>
 
           <div className="mb-1 flex items-center justify-between">
             <span className="text-[13px] font-semibold text-text-2">

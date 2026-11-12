@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { Select } from '@/components/ui/Select'
 import { defaultDateInPeriod } from '@/lib/format'
 import type { Member } from '@/features/finance/types'
 import { billDates, billLabel, billMonth } from '../billing'
@@ -17,7 +18,7 @@ interface CardFormModalProps {
 const DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
 
 const FIELD_CLASS =
-  'w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14.5px] text-text outline-none focus:border-primary'
+  'h-[46px] w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3.5 text-[14px] text-text outline-none transition-colors hover:border-text-3 focus:border-primary'
 
 const LABEL_CLASS = 'mb-1.5 block text-[13px] font-semibold text-text-2'
 
@@ -98,35 +99,33 @@ export function CardFormModal({
               <label htmlFor="card-closing" className={LABEL_CLASS}>
                 Fecha no dia
               </label>
-              <select
+              <Select
                 id="card-closing"
                 value={closingDay}
                 onChange={(e) => setClosingDay(Number(e.target.value))}
-                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 {DAYS.map((day) => (
                   <option key={day} value={day}>
                     {day}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="card-due" className={LABEL_CLASS}>
                 Vence no dia
               </label>
-              <select
+              <Select
                 id="card-due"
                 value={dueDay}
                 onChange={(e) => setDueDay(Number(e.target.value))}
-                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 {DAYS.map((day) => (
                   <option key={day} value={day}>
                     {day}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -135,11 +134,10 @@ export function CardFormModal({
               <label htmlFor="card-owner" className={LABEL_CLASS}>
                 De quem é
               </label>
-              <select
+              <Select
                 id="card-owner"
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
-                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 <option value="">Da família</option>
                 {owners.map((member) => (
@@ -147,7 +145,7 @@ export function CardFormModal({
                     {member.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 

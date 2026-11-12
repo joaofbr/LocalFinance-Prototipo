@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import type { ReactElement } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { Select } from '@/components/ui/Select'
 import type { Card } from '@/features/cards/types'
 import type { Category, Member } from '../types'
 import { DEFAULT_FILTERS, NO_CARD, hasActiveFilters } from '../transactionFilters'
@@ -15,8 +16,7 @@ interface FilterBarProps {
   showMembers: boolean
 }
 
-const selectClass =
-  'w-full min-w-0 cursor-pointer rounded-[10px] border border-border-strong bg-surface px-2.5 py-[9px] text-[13.5px] font-medium text-text outline-none focus:border-primary sm:w-auto'
+const fieldClass = 'sm:w-auto'
 
 export function FilterBar({
   filters,
@@ -30,28 +30,32 @@ export function FilterBar({
     {
       key: 'type',
       render: (span) => (
-        <select
+        <Select
+          compact
           aria-label="Tipo"
           value={filters.type}
+          highlighted={filters.type !== 'all'}
           onChange={(e) =>
             onChange({ ...filters, type: e.target.value as TransactionFilters['type'] })
           }
-          className={`${selectClass} ${span}`}
+          className={`${fieldClass} ${span}`}
         >
           <option value="all">Tipo: todos</option>
           <option value="income">Receitas</option>
           <option value="expense">Despesas</option>
-        </select>
+        </Select>
       ),
     },
     {
       key: 'category',
       render: (span) => (
-        <select
+        <Select
+          compact
           aria-label="Categoria"
           value={filters.categoryId}
+          highlighted={filters.categoryId !== 'all'}
           onChange={(e) => onChange({ ...filters, categoryId: e.target.value })}
-          className={`${selectClass} ${span}`}
+          className={`${fieldClass} ${span}`}
         >
           <option value="all">Categoria: todas</option>
           {categories.map((category) => (
@@ -59,7 +63,7 @@ export function FilterBar({
               {category.name}
             </option>
           ))}
-        </select>
+        </Select>
       ),
     },
   ]
@@ -68,11 +72,13 @@ export function FilterBar({
     controls.push({
       key: 'member',
       render: (span) => (
-        <select
+        <Select
+          compact
           aria-label="Integrante"
           value={filters.memberId}
+          highlighted={filters.memberId !== 'all'}
           onChange={(e) => onChange({ ...filters, memberId: e.target.value })}
-          className={`${selectClass} ${span}`}
+          className={`${fieldClass} ${span}`}
         >
           <option value="all">Integrante: todos</option>
           {members.map((member) => (
@@ -80,7 +86,7 @@ export function FilterBar({
               {member.name}
             </option>
           ))}
-        </select>
+        </Select>
       ),
     })
   }
@@ -89,11 +95,13 @@ export function FilterBar({
     controls.push({
       key: 'payment',
       render: (span) => (
-        <select
+        <Select
+          compact
           aria-label="Pagamento"
           value={filters.payment}
+          highlighted={filters.payment !== 'all'}
           onChange={(e) => onChange({ ...filters, payment: e.target.value })}
-          className={`${selectClass} ${span}`}
+          className={`${fieldClass} ${span}`}
         >
           <option value="all">Pagamento: todos</option>
           <option value={NO_CARD}>Sem cartão</option>
@@ -102,7 +110,7 @@ export function FilterBar({
               Cartão {card.name}
             </option>
           ))}
-        </select>
+        </Select>
       ),
     })
   }
@@ -114,8 +122,9 @@ export function FilterBar({
         <button
           type="button"
           onClick={() => onChange(DEFAULT_FILTERS)}
-          className={`rounded-[10px] border border-border-strong px-3 py-[9px] text-[13px] font-semibold text-text-2 hover:bg-surface-2 ${span}`}
+          className={`flex h-[38px] items-center justify-center gap-1.5 rounded-[10px] px-3 text-[13px] font-semibold text-text-2 hover:bg-surface-2 hover:text-text ${span}`}
         >
+          <Icon name="x" size={15} />
           Limpar
         </button>
       ),

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/components/ui/Icon'
+import { Select } from '@/components/ui/Select'
 import { formatCents, hexToRgba } from '@/lib/format'
 import { billDates, billLabel, monthOfIso, referenceMonth } from '@/features/cards/billing'
 import type { Card } from '@/features/cards/types'
@@ -307,11 +308,10 @@ export function TransactionFormSheet({
               >
                 Pagamento
               </label>
-              <select
+              <Select
                 id="payment"
                 value={selectedCard?.id ?? ''}
                 onChange={(e) => choosePayment(e.target.value)}
-                className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
               >
                 <option value="">À vista (Pix, débito, dinheiro)</option>
                 {paymentCards.map((card) => (
@@ -320,7 +320,7 @@ export function TransactionFormSheet({
                     {card.active ? '' : ' (arquivado)'}
                   </option>
                 ))}
-              </select>
+              </Select>
             </>
           )}
 
@@ -337,7 +337,7 @@ export function TransactionFormSheet({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="block w-full min-w-0 rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
+                className="block h-[46px] w-full min-w-0 rounded-xl border-[1.5px] border-border-strong bg-surface px-3.5 text-[14px] text-text outline-none transition-colors hover:border-text-3 focus:border-primary"
               />
             </div>
             {canRepeat && (
@@ -348,20 +348,19 @@ export function TransactionFormSheet({
                 >
                   Repetição
                 </label>
-                <select
+                <Select
                   id="repeatMode"
                   value={repeatMode}
                   onChange={(e) =>
                     setRepeatMode(e.target.value as SeriesKind | 'none')
                   }
-                  className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
                 >
                   <option value="none">Não repete</option>
                   <option value="fixed">Fixo mensal</option>
                   {type === 'expense' && (
                     <option value="installment">Parcelado</option>
                   )}
-                </select>
+                </Select>
               </div>
             )}
             {billHint && (
@@ -384,18 +383,17 @@ export function TransactionFormSheet({
               >
                 {splitting ? 'Número de parcelas' : 'Por quantos meses'}
               </label>
-              <select
+              <Select
                 id="repeat"
                 value={repeat}
                 onChange={(e) => setRepeat(Number(e.target.value))}
-                className="w-full cursor-pointer rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-[11px] text-[14px] text-text outline-none focus:border-primary"
               >
                 {REPEAT_OPTIONS.map((count) => (
                   <option key={count} value={count}>
                     {splitting ? `${count}x` : `${count} meses`}
                   </option>
                 ))}
-              </select>
+              </Select>
               {!splitting && (
                 <p className="mt-1.5 text-[12px] leading-relaxed text-text-3">
                   Cria um lançamento por mês com o mesmo valor. Quando acabar,
