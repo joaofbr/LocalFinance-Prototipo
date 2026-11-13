@@ -1,12 +1,19 @@
-const OFFLINE_CACHE = 'poupi-offline-v1'
+const OFFLINE_CACHE = 'poupi-offline-v2'
 const OFFLINE_URL = '/offline.html'
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(OFFLINE_CACHE)
-      .then((cache) => cache.add(new Request(OFFLINE_URL, { cache: 'reload' }))),
+async function cacheOfflinePage() {
+  const response = await fetch(OFFLINE_URL, { cache: 'reload' })
+  if (!response.ok) throw new Error('offline page unavailable')
+  const body = await response.text()
+  const cache = await caches.open(OFFLINE_CACHE)
+  await cache.put(
+    OFFLINE_URL,
+    new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }),
   )
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(cacheOfflinePage())
   self.skipWaiting()
 })
 
