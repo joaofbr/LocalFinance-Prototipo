@@ -1,8 +1,9 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/TextField'
+import { PasswordStrengthMeter } from '@/features/auth/components/PasswordStrengthMeter'
 import { FormAlert } from '@/components/ui/FormAlert'
 import { Icon } from '@/components/ui/Icon'
 import { getApiErrorMessage } from '@/lib/apiError'
@@ -25,6 +26,7 @@ export function ChangePasswordModal({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -34,6 +36,8 @@ export function ChangePasswordModal({
       confirmPassword: '',
     },
   })
+
+  const passwordValue = useWatch({ control, name: 'newPassword' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -94,6 +98,7 @@ export function ChangePasswordModal({
             error={errors.newPassword?.message}
             {...register('newPassword')}
           />
+          <PasswordStrengthMeter value={passwordValue} />
 
           <TextField
             label="Confirmar nova senha"

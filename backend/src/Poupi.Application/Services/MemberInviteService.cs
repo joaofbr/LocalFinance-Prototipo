@@ -18,8 +18,6 @@ public class MemberInviteService(
     IEmailSender email,
     InviteOptions options) : IMemberInviteService
 {
-    private const int MinPasswordLength = 8;
-
     public async Task SendInviteAsync(User user, CancellationToken ct = default)
     {
         var link = await CreateLinkAsync(user, ct);
@@ -66,11 +64,7 @@ public class MemberInviteService(
 
     public async Task SetPasswordAsync(SetPasswordRequest request, CancellationToken ct = default)
     {
-        if (request.Password.Length < MinPasswordLength)
-        {
-            throw new ValidationException(
-                $"A senha deve ter ao menos {MinPasswordLength} caracteres.");
-        }
+        PasswordPolicy.EnsureStrong(request.Password);
 
         var entry = await GetUsableTokenAsync(request.Token, ct);
         var user = entry.User!;

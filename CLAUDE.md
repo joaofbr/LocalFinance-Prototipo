@@ -112,6 +112,11 @@ Regras para não vazar dados entre contas:
 - Só a própria pessoa troca o e-mail de uma conta já ativada. Trocar o e-mail de um convite pendente
   invalida o link anterior e reenvia o convite.
 - Definir ou redefinir a senha encerra todas as sessões abertas (revoga os refresh tokens).
+- **Política de senha** (`Application/Common/PasswordPolicy.cs`, a trava de verdade): 8 a 128 caracteres,
+  1 letra maiúscula e 1 caractere especial (qualquer coisa que não seja letra, dígito ou espaço). Vale no
+  cadastro, na troca de senha e no definir/redefinir pelo link; **não** vale no login, para quem tem senha
+  antiga continuar entrando. `features/auth/passwordPolicy.ts` espelha a regra para o `PasswordStrengthMeter`
+  (fraca, boa, forte) e os schemas: mudou um, mude o outro.
 
 ## Lançamentos
 

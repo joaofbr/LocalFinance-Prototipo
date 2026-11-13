@@ -20,8 +20,6 @@ public class AuthService(
     RefreshTokenOptions refreshOptions,
     PlatformOptions platform) : IAuthService
 {
-    private const int MinPasswordLength = 8;
-
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
         var email = NormalizeEmail(request.Email);
@@ -54,11 +52,7 @@ public class AuthService(
         {
             throw new ValidationException("E-mail inválido.");
         }
-        if (request.Password.Length < MinPasswordLength)
-        {
-            throw new ValidationException(
-                $"A senha deve ter ao menos {MinPasswordLength} caracteres.");
-        }
+        PasswordPolicy.EnsureStrong(request.Password);
         var existing = await users.GetByEmailAsync(email, ct);
         if (existing is not null)
         {
@@ -138,11 +132,7 @@ public class AuthService(
         {
             throw new ValidationException("A senha atual está incorreta.");
         }
-        if (request.NewPassword.Length < MinPasswordLength)
-        {
-            throw new ValidationException(
-                $"A nova senha deve ter ao menos {MinPasswordLength} caracteres.");
-        }
+        PasswordPolicy.EnsureStrong(request.NewPassword);
         if (hasher.Verify(request.NewPassword, user.PasswordHash))
         {
             throw new ValidationException("A nova senha deve ser diferente da atual.");

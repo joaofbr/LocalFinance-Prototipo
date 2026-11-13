@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '@/api/auth'
@@ -15,6 +15,7 @@ import { useAuth } from '../useAuth'
 import { setPasswordSchema } from '../schemas'
 import type { SetPasswordFormValues } from '../schemas'
 import { AuthLayout } from '../components/AuthLayout'
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 import type { InviteTarget } from '../types'
 
 function inviterLabel(target: InviteTarget): string {
@@ -48,6 +49,7 @@ export function SetPasswordPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SetPasswordFormValues>({
     resolver: zodResolver(setPasswordSchema),
@@ -73,6 +75,8 @@ export function SetPasswordPage() {
       cancelled = true
     }
   }, [token])
+
+  const passwordValue = useWatch({ control, name: 'password' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -223,6 +227,7 @@ export function SetPasswordPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        <PasswordStrengthMeter value={passwordValue} />
 
         <TextField
           label="Confirmar senha"

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { useAuth } from '../useAuth'
 import { registerSchema } from '../schemas'
 import type { RegisterFormValues } from '../schemas'
 import { AuthLayout } from '../components/AuthLayout'
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 
 export function RegisterPage() {
   const { register: registerUser } = useAuth()
@@ -21,11 +22,14 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
   })
+
+  const passwordValue = useWatch({ control, name: 'password' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -119,6 +123,7 @@ export function RegisterPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        <PasswordStrengthMeter value={passwordValue} />
 
         <TextField
           label="Confirmar senha"
