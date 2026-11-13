@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { promptInstall, useInstallPromptState } from './installPrompt'
 import { detectMobilePlatform, isRunningAsApp } from './platform'
@@ -8,23 +8,31 @@ export function useAddToHomeScreen() {
   const { canPrompt, installed } = useInstallPromptState()
   const [platform] = useState(detectMobilePlatform)
   const [runningAsApp] = useState(isRunningAsApp)
-  const [instructionsOpen, setInstructionsOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
-  const start = async () => {
-    if (!canPrompt) {
-      setInstructionsOpen(true)
-      return
-    }
+  const install = async () => {
     if (await promptInstall()) {
+      setSheetOpen(false)
       showToast('Pronto! O Poupi está na sua tela inicial.')
     }
   }
 
+  const start = () => {
+    if (canPrompt) void install()
+    else setSheetOpen(true)
+  }
+
+  const openSheet = useCallback(() => setSheetOpen(true), [])
+  const closeSheet = useCallback(() => setSheetOpen(false), [])
+
   return {
     platform,
     available: platform !== null && !runningAsApp && !installed,
+    canPrompt,
+    install,
     start,
-    instructionsOpen,
-    closeInstructions: () => setInstructionsOpen(false),
+    sheetOpen,
+    openSheet,
+    closeSheet,
   }
 }

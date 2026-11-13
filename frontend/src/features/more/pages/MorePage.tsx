@@ -4,7 +4,7 @@ import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/features/auth/useAuth'
 import { useHousehold } from '@/features/finance/hooks'
 import { useAccount } from '@/features/household/useAccount'
-import { InstallInstructionsSheet } from '@/features/install/InstallInstructionsSheet'
+import { InstallSheet } from '@/features/install/InstallSheet'
 import { useAddToHomeScreen } from '@/features/install/useAddToHomeScreen'
 import { usePlatformOverview } from '@/features/platform/hooks'
 import {
@@ -63,7 +63,7 @@ export function MorePage() {
         <>
           <button
             type="button"
-            onClick={() => void install.start()}
+            onClick={install.start}
             className="mb-4 flex w-full items-center gap-3 rounded-[20px] border border-border bg-surface p-4 text-left shadow-card hover:bg-surface-2"
           >
             <span className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-[11px] bg-primary-weak text-primary">
@@ -79,10 +79,12 @@ export function MorePage() {
             </span>
             <Icon name="chevronRight" size={18} className="text-text-3" />
           </button>
-          {install.instructionsOpen && (
-            <InstallInstructionsSheet
+          {install.sheetOpen && (
+            <InstallSheet
               platform={install.platform}
-              onClose={install.closeInstructions}
+              canPrompt={install.canPrompt}
+              onInstall={() => void install.install()}
+              onClose={install.closeSheet}
             />
           )}
         </>

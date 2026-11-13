@@ -211,10 +211,15 @@ Regras para não vazar dados entre contas:
 
 - `features/install`: aviso no topo (só celular, some por 30 dias ao dispensar) e item fixo em "Mais".
   Não aparece quando o app já roda como ícone (`display-mode: standalone`) nem no Capacitor.
-- Android: se o navegador disparar `beforeinstallprompt`, o botão abre a instalação nativa; senão, mostra o
-  passo a passo pelo menu. iOS não tem instalação programática: sempre o passo a passo do Safari.
-- Sem service worker de propósito: o objetivo é só o ícone abrindo em tela cheia. Um service worker com
-  cache pode prender a versão antiga depois do deploy; só adicione se o app precisar funcionar offline.
+- Primeiro acesso pelo celular: a `InstallSheet` abre sozinha uma vez por aparelho (`lf.install-welcome-shown`),
+  1,5 s depois de entrar. Nenhum navegador instala sem o toque da pessoa: o máximo é essa folha.
+- Android: com `beforeinstallprompt`, a folha mostra "Instalar agora" (janela nativa, só pode ser chamada
+  num toque); sem ele, o passo a passo pelo menu. iOS não tem instalação programática: sempre o passo a passo.
+- `public/sw.js` existe só para o Chrome liberar a janela nativa (o critério exige service worker com
+  `fetch`). Ele **não guarda o app em cache**: só intercepta navegação, vai sempre à rede e, sem internet,
+  mostra `offline.html`. Não acrescente cache de assets sem estratégia de atualização: prende a versão
+  antiga no celular depois do deploy. Registro só em produção e fora do Capacitor
+  (`registerServiceWorker.ts`). Conferir instalabilidade: `Page.getInstallabilityErrors` no Chrome deve vir vazio.
 
 ## Front: armadilhas conhecidas
 

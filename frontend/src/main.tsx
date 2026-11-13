@@ -8,8 +8,10 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { preventIosFocusZoom } from '@/features/install/platform'
+import { registerServiceWorker } from '@/features/install/registerServiceWorker'
 
 preventIosFocusZoom()
+registerServiceWorker()
 
 const queryClient = new QueryClient({
   defaultOptions: {

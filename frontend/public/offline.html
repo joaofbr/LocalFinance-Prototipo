@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Sem conexão · Poupi</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f7f6;
+        --surface: #ffffff;
+        --text: #0f1a16;
+        --text2: #566169;
+        --border: #e7eae9;
+        --primary: #059669;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0a0f0d;
+          --surface: #121a18;
+          --text: #eef3f1;
+          --text2: #a3b0ab;
+          --border: #243029;
+          --primary: #10b981;
+        }
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      main {
+        width: 100%;
+        max-width: 360px;
+        padding: 32px 24px;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--surface);
+        text-align: center;
+      }
+      svg { display: block; margin: 0 auto 20px; }
+      h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+      p { font-size: 15px; line-height: 1.5; color: var(--text2); margin-bottom: 24px; }
+      button {
+        width: 100%;
+        padding: 14px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#12a678" />
+            <stop offset="1" stop-color="#056a4c" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="13" fill="url(#g)" />
+        <circle cx="24" cy="19.75" r="8.3" fill="none" stroke="#fff" stroke-width="5" />
+        <line x1="15.7" y1="19.75" x2="15.7" y2="36.55" stroke="#fff" stroke-width="5" stroke-linecap="round" />
+        <circle cx="24" cy="19.75" r="5.8" fill="#c98a14" />
+        <circle cx="23.55" cy="19.3" r="5" fill="#f6c445" />
+      </svg>
+      <h1>Você está sem conexão</h1>
+      <p>O Poupi precisa de internet para mostrar seus lançamentos. Confira sua conexão e tente de novo.</p>
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+    </main>
+  </body>
+</html>
