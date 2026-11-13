@@ -1,4 +1,4 @@
-# LocalFinance: frontend
+# Poupi: frontend
 
 SPA em React + TypeScript + Tailwind, empacotável para mobile via Capacitor.
 Consome a API REST do backend (projeto `../backend`).

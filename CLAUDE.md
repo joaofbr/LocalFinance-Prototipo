@@ -1,9 +1,8 @@
 # Poupi
 
-Controle financeiro pessoal ou familiar. O produto se chama **Poupi** (o nome LocalFinance já era de
-outro app de finanças). O código continua com o nome interno `LocalFinance` (pastas, namespaces, banco,
-emissor e audiência do JWT): isso ninguém vê, e trocar o JWT derrubaria todas as sessões. Tudo o que o
-usuário vê (telas, e-mails, título, manifest) diz "Poupi". Monorepo:
+Controle financeiro pessoal ou familiar. Até 2026-11-13 o produto se chamava LocalFinance; o nome já
+era de outro app de finanças no Brasil, e tudo virou **Poupi** (telas, e-mails, projetos `Poupi.*`,
+namespaces, repositório `joaofbr/poupi`). Não reintroduza o nome antigo. Monorepo:
 
 - `backend/`: ASP.NET Core (.NET 10), EF Core, PostgreSQL, JWT. Camadas `Domain`, `Application`,
   `Infrastructure` e `Api` (o Domain não depende de ninguém, a Api só conversa com a Application).
@@ -15,9 +14,9 @@ usuário vê (telas, e-mails, título, manifest) diz "Poupi". Monorepo:
 
 | O quê | Comando |
 |---|---|
-| API (porta 5063) | `cd backend/src/LocalFinance.Api && dotnet run --launch-profile http` |
-| Build do backend | `dotnet build backend/LocalFinance.slnx` |
-| Nova migration | `dotnet ef migrations add <Nome> --project backend/src/LocalFinance.Infrastructure --startup-project backend/src/LocalFinance.Api --output-dir Persistence/Migrations` |
+| API (porta 5063) | `cd backend/src/Poupi.Api && dotnet run --launch-profile http` |
+| Build do backend | `dotnet build backend/Poupi.slnx` |
+| Nova migration | `dotnet ef migrations add <Nome> --project backend/src/Poupi.Infrastructure --startup-project backend/src/Poupi.Api --output-dir Persistence/Migrations` |
 | Modelo x migrations | `dotnet ef migrations has-pending-model-changes` (mesmos `--project`/`--startup-project`) |
 | Front (porta 5173) | `cd frontend && npm run dev` |
 | Tipos e lint | `npx tsc -b --noEmit` e `npm run lint` |

@@ -1,4 +1,4 @@
-# LocalFinance
+# Poupi
 
 Controle financeiro pessoal ou familiar: React + TypeScript no front, ASP.NET Core
 (.NET 10) com EF Core e PostgreSQL no back, autenticação por JWT.
@@ -26,7 +26,7 @@ A aplicação recusa subir com chave menor que 32 bytes, em vez de emitir tokens
 assinados com chave fraca.
 
 ```bash
-cd backend/src/LocalFinance.Api
+cd backend/src/Poupi.Api
 dotnet user-secrets set "Jwt:Key" "<32+ bytes>"
 ```
 
@@ -50,7 +50,7 @@ variável de ambiente `Jwt__Key`, útil em container e em CI.
 ### 2. Backend
 
 ```bash
-cd backend/src/LocalFinance.Api && dotnet run
+cd backend/src/Poupi.Api && dotnet run
 ```
 
 Sobe em `http://localhost:5063`, com Swagger em `http://localhost:5063/swagger`.
@@ -59,7 +59,7 @@ O startup aplica as migrations em qualquer ambiente, sem precisar rodar
 `dotnet ef database update` na mão. As 11 categorias padrão são criadas para cada
 conta nova no momento do cadastro.
 
-A connection string padrão aponta para `localhost:5432`, banco `localfinance`,
+A connection string padrão aponta para `localhost:5432`, banco `poupi`,
 usuário `postgres`. Para usar outro servidor (o Neon, por exemplo), sobrescreva
 sem versionar:
 
@@ -81,7 +81,7 @@ O sistema está em **beta fechado**: cada cadastro novo fica pendente até ser a
 a área do desenvolvedor. Configure o seu e-mail como desenvolvedor antes de usar:
 
 ```bash
-cd backend/src/LocalFinance.Api
+cd backend/src/Poupi.Api
 dotnet user-secrets set "Platform:DeveloperEmails:0" "voce@email.com"
 ```
 
@@ -161,7 +161,7 @@ envio. Para enviar de verdade:
   "User": "voce@gmail.com",
   "Password": "",            // use Smtp__Password ou user-secrets, nunca aqui
   "FromEmail": "voce@gmail.com",
-  "FromName": "LocalFinance"
+  "FromName": "Poupi"
 }
 ```
 

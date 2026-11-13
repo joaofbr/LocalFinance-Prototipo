@@ -1,4 +1,4 @@
-# Plano de Gerenciamento de Projeto: LocalFinance
+# Plano de Gerenciamento de Projeto: Poupi
 
 > Versão revisada. Substitui a stack Blazor/MudBlazor do plano original por
 > **React + Tailwind + Capacitor** (frontend) e **C# Web API REST** (backend),
@@ -81,17 +81,17 @@ em vez de cookie de sessão do Blazor.
 ### 5.1 Estrutura do monorepo
 
 ```
-LocalFinance/
+Poupi/
 ├── README.md
 ├── docs/
 │   └── PLANO.md
 ├── backend/
-│   ├── LocalFinance.slnx
+│   ├── Poupi.slnx
 │   └── src/
-│       ├── LocalFinance.Domain/          # Entidades, enums, read models, interfaces de repositório
-│       ├── LocalFinance.Application/     # Serviços de caso de uso, DTOs, interfaces
-│       ├── LocalFinance.Infrastructure/  # EF Core, repositórios, DbContext, JWT, e-mail, migrations
-│       └── LocalFinance.Api/             # Controllers, DI, middleware, Swagger, Program.cs
+│       ├── Poupi.Domain/          # Entidades, enums, read models, interfaces de repositório
+│       ├── Poupi.Application/     # Serviços de caso de uso, DTOs, interfaces
+│       ├── Poupi.Infrastructure/  # EF Core, repositórios, DbContext, JWT, e-mail, migrations
+│       └── Poupi.Api/             # Controllers, DI, middleware, Swagger, Program.cs
 └── frontend/
     ├── src/
     │   ├── api/          # cliente axios + endpoints de auth

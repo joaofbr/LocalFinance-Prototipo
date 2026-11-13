@@ -1,15 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY LocalFinance.slnx ./
-COPY src/LocalFinance.Domain/LocalFinance.Domain.csproj src/LocalFinance.Domain/
-COPY src/LocalFinance.Application/LocalFinance.Application.csproj src/LocalFinance.Application/
-COPY src/LocalFinance.Infrastructure/LocalFinance.Infrastructure.csproj src/LocalFinance.Infrastructure/
-COPY src/LocalFinance.Api/LocalFinance.Api.csproj src/LocalFinance.Api/
-RUN dotnet restore src/LocalFinance.Api/LocalFinance.Api.csproj
+COPY Poupi.slnx ./
+COPY src/Poupi.Domain/Poupi.Domain.csproj src/Poupi.Domain/
+COPY src/Poupi.Application/Poupi.Application.csproj src/Poupi.Application/
+COPY src/Poupi.Infrastructure/Poupi.Infrastructure.csproj src/Poupi.Infrastructure/
+COPY src/Poupi.Api/Poupi.Api.csproj src/Poupi.Api/
+RUN dotnet restore src/Poupi.Api/Poupi.Api.csproj
 
 COPY . .
-RUN dotnet publish src/LocalFinance.Api/LocalFinance.Api.csproj \
+RUN dotnet publish src/Poupi.Api/Poupi.Api.csproj \
     -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
@@ -22,4 +22,4 @@ EXPOSE 8080
 
 USER $APP_UID
 
-ENTRYPOINT ["dotnet", "LocalFinance.Api.dll"]
+ENTRYPOINT ["dotnet", "Poupi.Api.dll"]

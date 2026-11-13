@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Poupi.Api/Poupi.Api.csproj" />
+    <Project Path="src/Poupi.Application/Poupi.Application.csproj" />
+    <Project Path="src/Poupi.Domain/Poupi.Domain.csproj" />
+    <Project Path="src/Poupi.Infrastructure/Poupi.Infrastructure.csproj" />
+  </Folder>
+</Solution>
