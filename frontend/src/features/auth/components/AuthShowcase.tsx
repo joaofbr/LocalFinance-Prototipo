@@ -21,7 +21,7 @@ export function AuthShowcase() {
   const dueMonth = String(((now.getMonth() + 1) % 12) + 1).padStart(2, '0')
 
   return (
-    <section className="relative h-[330px] flex-shrink-0 overflow-hidden bg-[var(--auth-stage)] px-[22px] pt-6 lg:h-auto lg:min-h-screen lg:w-[56%] lg:px-14 lg:pt-10">
+    <section className="relative h-[330px] flex-shrink-0 overflow-hidden bg-[var(--auth-stage)] px-[22px] pt-6 lg:flex lg:h-auto lg:min-h-screen lg:w-[56%] lg:flex-col lg:px-14 lg:pt-10">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -46,22 +46,24 @@ export function AuthShowcase() {
         Gastos, cartões com fatura e relatórios por categoria. Sozinho ou dividindo com a família.
       </p>
 
-      <PhoneMock period={period} />
+      <div className="lg:relative lg:mt-12 lg:min-h-[340px] lg:flex-1">
+        <PhoneMock period={period} />
 
-      <ShowcaseChip
-        className="bottom-5 left-4 -rotate-3 lg:bottom-[24%] lg:left-[8%]"
-        icon="creditCard"
-        tone="gold"
-        title="Fatura Nubank"
-        detail={`vence 12/${dueMonth} · R$ 1.258,90`}
-      />
-      <ShowcaseChip
-        className="hidden rotate-2 lg:bottom-[44%] lg:right-[6%] lg:flex"
-        icon="check"
-        tone="green"
-        title="Sobrou R$ 820"
-        detail={`em ${monthName}`}
-      />
+        <ShowcaseChip
+          className="bottom-5 left-4 -rotate-3 lg:bottom-auto lg:left-[4%] lg:top-[190px]"
+          icon="creditCard"
+          tone="gold"
+          title="Fatura Nubank"
+          detail={`vence 12/${dueMonth} · R$ 1.258,90`}
+        />
+        <ShowcaseChip
+          className="hidden rotate-2 lg:right-[4%] lg:top-[56px] lg:flex"
+          icon="check"
+          tone="green"
+          title="Sobrou R$ 820"
+          detail={`em ${monthName}`}
+        />
+      </div>
     </section>
   )
 }
@@ -70,7 +72,7 @@ function PhoneMock({ period }: { period: string }) {
   return (
     <div
       aria-hidden
-      className="absolute left-1/2 top-[166px] h-[610px] w-[300px] origin-top -translate-x-[20%] -rotate-6 scale-[0.68] rounded-[48px] bg-[#0d1512] p-3 shadow-[0_50px_90px_-30px_rgba(6,40,28,0.45)] ring-1 ring-white/10 lg:top-auto lg:bottom-[-120px] lg:-translate-x-[40%] lg:scale-100"
+      className="absolute left-1/2 top-[166px] h-[610px] w-[300px] origin-top -translate-x-[20%] -rotate-6 scale-[0.68] rounded-[48px] bg-[#0d1512] p-3 shadow-[0_50px_90px_-30px_rgba(6,40,28,0.45)] ring-1 ring-white/10 lg:top-4 lg:-translate-x-[40%] lg:scale-100"
     >
       <div data-theme="light" className="h-full w-full overflow-hidden rounded-[38px] bg-bg px-3.5 py-[18px] text-text">
         <div className="flex justify-between px-2 pb-2.5 text-[11px] font-bold">
