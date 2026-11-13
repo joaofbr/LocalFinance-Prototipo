@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'strong' | 'secondary' | 'ghost'
   loading?: boolean
   loadingLabel?: string
   fullWidth?: boolean
@@ -11,6 +11,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
     'bg-primary text-primary-fg shadow-card-md hover:opacity-95 disabled:opacity-60',
+  strong:
+    'bg-[var(--cta)] text-[var(--cta-fg)] shadow-card-md hover:opacity-95 disabled:opacity-60',
   secondary:
     'bg-surface text-text border border-border-strong hover:bg-surface-2 disabled:opacity-60',
   ghost: 'bg-transparent text-text-2 hover:bg-surface-2 disabled:opacity-60',

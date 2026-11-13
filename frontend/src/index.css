@@ -61,6 +61,12 @@
   --shadow-md: 0 6px 20px -6px rgba(16, 24, 40, 0.12);
   --shadow-lg: 0 18px 40px -12px rgba(16, 24, 40, 0.22);
   --overlay: rgba(15, 23, 25, 0.45);
+  --cta: #0c3a2d;
+  --cta-fg: #ffffff;
+  --auth-stage: #eff6f3;
+  --auth-dots: rgba(15, 26, 22, 0.07);
+  --auth-glow-green: rgba(16, 185, 129, 0.2);
+  --auth-glow-gold: rgba(246, 196, 69, 0.18);
 }
 
 [data-theme='dark'] {
@@ -91,6 +97,12 @@
   --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
   --overlay: rgba(0, 0, 0, 0.6);
+  --cta: #10b981;
+  --cta-fg: #04130d;
+  --auth-stage: #0b1712;
+  --auth-dots: rgba(255, 255, 255, 0.05);
+  --auth-glow-green: rgba(16, 185, 129, 0.16);
+  --auth-glow-gold: rgba(246, 196, 69, 0.05);
 }
 
 html,

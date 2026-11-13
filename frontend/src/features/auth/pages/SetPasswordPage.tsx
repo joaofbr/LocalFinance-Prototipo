@@ -131,7 +131,7 @@ export function SetPasswordPage() {
           ficou livre. Se quiser usar o Poupi com a sua própria conta, é só criar
           um cadastro.
         </p>
-        <Button type="button" fullWidth onClick={() => goTo('/register')}>
+        <Button type="button" variant="strong" fullWidth onClick={() => goTo('/register')}>
           Criar minha conta
         </Button>
       </AuthLayout>
@@ -236,6 +236,7 @@ export function SetPasswordPage() {
 
         <Button
           type="submit"
+          variant="strong"
           fullWidth
           loading={isSubmitting}
           loadingLabel="Salvando..."

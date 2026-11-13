@@ -196,6 +196,9 @@ Regras para não vazar dados entre contas:
   zoom ao focar campo com letra menor que 16px. Só no iOS: lá o zoom com dois dedos continua funcionando;
   no Android isso o bloquearia.
 - Toda tela que carrega dados trata erro com `QueryError` ("Tentar de novo"), em vez de parecer vazia.
+- Telas de entrada (login, cadastro, senha) usam `AuthLayout`: à esquerda a `AuthShowcase` (título + celular
+  com o app de demonstração, sempre claro via `data-theme="light"`, e o mês atual), à direita o formulário.
+  O botão principal delas é `variant="strong"` (tokens `--cta`/`--cta-fg`: verde-tinta no claro, verde no escuro).
 - Celular (390px):
   - Linha de lista é um botão que abre a edição; nada de ícones de ação espremendo o texto.
   - Ação destrutiva fica dentro do formulário e sempre pede confirmação.

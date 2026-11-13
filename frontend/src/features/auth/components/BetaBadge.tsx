@@ -1,13 +1,7 @@
-export function BetaBadge({ onBrand = false }: { onBrand?: boolean }) {
+export function BetaBadge() {
   return (
-    <span
-      className={`rounded-full border px-2 py-[2px] text-[11px] font-semibold tracking-wide ${
-        onBrand
-          ? 'border-white/25 text-white/80'
-          : 'border-border-strong text-text-2'
-      }`}
-    >
-      Beta
+    <span className="inline-block rounded-full bg-primary-weak px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-primary-strong">
+      Beta fechado
     </span>
   )
 }

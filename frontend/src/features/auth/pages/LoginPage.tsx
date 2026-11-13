@@ -43,8 +43,8 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Entrar na sua conta"
-      subtitle="Acesse seu painel financeiro."
+      title="Que bom ter você de volta"
+      subtitle="Entre para ver como está o seu mês."
       note="O Poupi está em beta fechado. Algumas funções ainda podem mudar."
       footer={
         <>
@@ -94,6 +94,7 @@ export function LoginPage() {
 
         <Button
           type="submit"
+          variant="strong"
           fullWidth
           loading={isSubmitting}
           loadingLabel="Entrando..."

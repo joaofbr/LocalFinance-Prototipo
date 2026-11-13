@@ -132,6 +132,7 @@ export function RegisterPage() {
 
         <Button
           type="submit"
+          variant="strong"
           fullWidth
           loading={isSubmitting}
           loadingLabel="Criando conta..."

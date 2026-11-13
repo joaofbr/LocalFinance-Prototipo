@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
-import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
+import { AuthShowcase } from './AuthShowcase'
 import { BetaBadge } from './BetaBadge'
-import { BrandPanel } from './BrandPanel'
 
 interface AuthLayoutProps {
   title: string
@@ -14,38 +13,34 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, subtitle, children, footer, note }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen">
-      <BrandPanel />
+    <div className="flex min-h-screen flex-col bg-surface lg:flex-row">
+      <AuthShowcase />
 
-      <div className="relative flex flex-1 items-center justify-center p-6">
-        <div className="absolute right-5 top-5">
+      <main className="relative flex flex-1 justify-center px-[22px] pb-10 pt-7 lg:items-center lg:p-10">
+        <div className="absolute right-5 top-5 hidden lg:block">
           <ThemeToggle />
         </div>
 
         <div className="w-full max-w-[380px]">
-          <div className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
-            <Logo size={44} />
+          <div className="mb-4">
             <BetaBadge />
           </div>
-
-          <h2 className="mb-1.5 text-[26px] font-extrabold tracking-tight">
+          <h2 className="mb-1.5 text-[26px] font-extrabold tracking-[-0.03em] lg:text-[30px]">
             {title}
           </h2>
-          <p className="mb-7 text-[14.5px] text-text-2">{subtitle}</p>
+          <p className="mb-7 text-[15px] text-text-2">{subtitle}</p>
 
           {children}
 
           {footer && (
-            <p className="mt-6 text-center text-[13.5px] text-text-2">{footer}</p>
+            <p className="mt-6 text-center text-[14px] text-text-2">{footer}</p>
           )}
 
           {note && (
-            <p className="mt-8 border-t border-border pt-5 text-center text-[12.5px] leading-relaxed text-text-3">
-              {note}
-            </p>
+            <p className="mt-8 text-center text-[12.5px] leading-relaxed text-text-3">{note}</p>
           )}
         </div>
-      </div>
+      </main>
     </div>
   )
 }

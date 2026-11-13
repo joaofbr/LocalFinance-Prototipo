@@ -93,6 +93,7 @@ export function ForgotPasswordPage() {
 
         <Button
           type="submit"
+          variant="strong"
           fullWidth
           loading={isSubmitting}
           loadingLabel="Enviando..."
