@@ -6,10 +6,11 @@ import {
   TransactionSheetProvider,
   useTransactionSheet,
 } from '@/features/finance/TransactionSheetProvider'
+import { InstallBanner } from '@/features/install/InstallBanner'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { PullToRefresh } from './PullToRefresh'
-import { getPageTitle } from './navConfig'
+import { MORE_PATH, getPageTitle } from './navConfig'
 
 export function AppLayout() {
   return (
@@ -49,6 +50,7 @@ function AppShell() {
         </header>
 
         <div className="safe-content mx-auto w-full max-w-[1120px] flex-1 p-5">
+          {location.pathname !== MORE_PATH && <InstallBanner />}
           <Outlet />
         </div>
       </main>

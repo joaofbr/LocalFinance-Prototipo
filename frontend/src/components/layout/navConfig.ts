@@ -19,6 +19,8 @@ const MEMBERS_ITEM: NavItem = {
 
 export const CONSOLE_PATH = '/console'
 
+export const MORE_PATH = '/mais'
+
 const CONSOLE_ITEM: NavItem = {
   to: CONSOLE_PATH,
   label: 'Console',
@@ -63,7 +65,7 @@ export const BOTTOM_NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Início', icon: 'grid' },
   { to: '/transactions', label: 'Transações', icon: 'list' },
   { to: '/reports', label: 'Relatórios', icon: 'barChart' },
-  { to: '/mais', label: 'Mais', icon: 'more' },
+  { to: MORE_PATH, label: 'Mais', icon: 'more' },
 ]
 
 export function visibleNavItems(
@@ -92,9 +94,9 @@ const TITLES: Record<string, string> = {
   '/modo-familia': 'Modo família',
   '/console': 'Console',
   '/profile': 'Perfil',
-  '/mais': 'Mais',
+  [MORE_PATH]: 'Mais',
 }
 
 export function getPageTitle(pathname: string): string {
-  return TITLES[pathname] ?? 'LocalFinance'
+  return TITLES[pathname] ?? 'Poupi'
 }

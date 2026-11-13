@@ -10,7 +10,7 @@ public class SmtpOptions
     public string User { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = "LocalFinance";
+    public string FromName { get; set; } = "Poupi";
 
     public bool RequiresAuth => !string.IsNullOrWhiteSpace(User);
 

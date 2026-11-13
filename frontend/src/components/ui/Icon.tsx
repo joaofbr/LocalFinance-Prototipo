@@ -194,6 +194,25 @@ const ICONS = {
     ['path', { d: 'M2.5 10h19' }],
     ['path', { d: 'M6.5 15h4' }],
   ],
+  share: [
+    ['path', { d: 'M12 3v12' }],
+    ['path', { d: 'M8 7l4-4 4 4' }],
+    ['path', { d: 'M8 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2' }],
+  ],
+  plusSquare: [
+    ['rect', { x: 3, y: 3, width: 18, height: 18, rx: 4 }],
+    ['path', { d: 'M12 8v8' }],
+    ['path', { d: 'M8 12h8' }],
+  ],
+  moreVertical: [
+    ['circle', { cx: 12, cy: 5, r: 1 }],
+    ['circle', { cx: 12, cy: 12, r: 1 }],
+    ['circle', { cx: 12, cy: 19, r: 1 }],
+  ],
+  smartphone: [
+    ['rect', { x: 6, y: 2.5, width: 12, height: 19, rx: 2.5 }],
+    ['path', { d: 'M11 18h2' }],
+  ],
 } satisfies Record<string, SvgChild[]>
 
 export type IconName = keyof typeof ICONS

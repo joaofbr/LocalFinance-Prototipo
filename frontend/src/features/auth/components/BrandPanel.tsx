@@ -1,4 +1,4 @@
-import { Icon } from '@/components/ui/Icon'
+import { Logo } from '@/components/ui/Logo'
 import { BetaBadge } from './BetaBadge'
 import { ProductTour } from './ProductTour'
 
@@ -6,10 +6,7 @@ export function BrandPanel() {
   return (
     <aside className="hidden w-[min(46%,620px)] flex-shrink-0 flex-col justify-between gap-10 bg-brand-ink px-12 py-10 text-white lg:flex xl:px-14">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-white/10 ring-1 ring-white/15">
-          <Icon name="trendingUp" size={21} strokeWidth={2.4} />
-        </span>
-        <span className="text-[19px] font-extrabold tracking-tight">LocalFinance</span>
+        <Logo size={40} />
         <BetaBadge onBrand />
       </div>
 
@@ -21,7 +18,7 @@ export function BrandPanel() {
       </div>
 
       <p className="text-[12.5px] text-white/45">
-        © {new Date().getFullYear()} LocalFinance
+        © {new Date().getFullYear()} Poupi
       </p>
     </aside>
   )

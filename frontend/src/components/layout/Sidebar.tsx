@@ -51,7 +51,7 @@ export function Sidebar() {
 
       <div className="mt-2.5 border-t border-border pt-3.5">
         <div className="flex items-center gap-2.5 px-2 py-1.5">
-          <Avatar name={account.name || 'LocalFinance'} color={account.color} size={36} />
+          <Avatar name={account.name || 'Poupi'} color={account.color} size={36} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[13.5px] font-semibold">
               {account.name || 'Minha conta'}

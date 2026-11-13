@@ -53,6 +53,16 @@ export function defaultDateInPeriod(year: number, month: number): string {
   return toIsoDate(new Date(year, month, Math.min(today.getDate(), lastDay)))
 }
 
+export function formatDateMedium(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number)
+  if (!year || !month || !day) return ''
+  return new Date(year, month - 1, day).toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
 }

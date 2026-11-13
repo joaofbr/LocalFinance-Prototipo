@@ -7,6 +7,9 @@ import App from './App.tsx'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { AuthProvider } from '@/features/auth/AuthContext'
+import { preventIosFocusZoom } from '@/features/install/platform'
+
+preventIosFocusZoom()
 
 const queryClient = new QueryClient({
   defaultOptions: {

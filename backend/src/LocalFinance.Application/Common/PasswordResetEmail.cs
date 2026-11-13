@@ -8,8 +8,8 @@ public static class PasswordResetEmail
         EmailTemplate.Build(
             name,
             toEmail,
-            "Redefinir sua senha do LocalFinance",
-            "Recebemos um pedido para redefinir a senha da sua conta no LocalFinance. "
+            "Redefinir sua senha do Poupi",
+            "Recebemos um pedido para redefinir a senha da sua conta no Poupi. "
                 + "Para escolher uma nova senha, use o botão abaixo.",
             new EmailAction("Redefinir minha senha", link),
             $"O link vale por {expiryHours} horas e só pode ser usado uma vez.",

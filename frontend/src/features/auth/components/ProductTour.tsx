@@ -9,7 +9,7 @@ export function ProductTour() {
   return (
     <section
       aria-roledescription="carrossel"
-      aria-label="Conheça o LocalFinance"
+      aria-label="Conheça o Poupi"
       className="group w-full max-w-[420px]"
     >
       <div className="relative h-[292px]">

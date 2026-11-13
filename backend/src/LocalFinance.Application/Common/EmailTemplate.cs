@@ -77,7 +77,7 @@ public static class EmailTemplate
                   <tr><td align="center">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
                            style="max-width:520px;background:#ffffff;border-radius:16px;padding:32px">
-                      <tr><td style="font-size:20px;font-weight:bold;padding-bottom:8px">LocalFinance</td></tr>
+                      <tr><td style="font-size:20px;font-weight:bold;padding-bottom:8px">Poupi</td></tr>
                       <tr><td style="font-size:16px;padding-bottom:16px">Olá, {Escape(firstName)}!</td></tr>
                       <tr><td style="font-size:15px;line-height:1.6;padding-bottom:24px">{Escape(message)}</td></tr>
                       {button}

@@ -45,7 +45,7 @@ export function LoginPage() {
     <AuthLayout
       title="Entrar na sua conta"
       subtitle="Acesse seu painel financeiro."
-      note="O LocalFinance está em beta fechado. Algumas funções ainda podem mudar."
+      note="O Poupi está em beta fechado. Algumas funções ainda podem mudar."
       footer={
         <>
           Não tem uma conta?{' '}

@@ -128,7 +128,7 @@ export function SetPasswordPage() {
       >
         <p className="mb-6 text-[13.5px] leading-relaxed text-text-2">
           O convite foi cancelado e o e-mail <strong className="text-text">{target?.email}</strong>{' '}
-          ficou livre. Se quiser usar o LocalFinance com a sua própria conta, é só criar
+          ficou livre. Se quiser usar o Poupi com a sua própria conta, é só criar
           um cadastro.
         </p>
         <Button type="button" fullWidth onClick={() => goTo('/register')}>

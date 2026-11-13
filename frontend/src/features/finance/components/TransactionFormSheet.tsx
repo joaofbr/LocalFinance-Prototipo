@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DateField } from '@/components/ui/DateField'
 import { Icon } from '@/components/ui/Icon'
 import { Select } from '@/components/ui/Select'
 import { formatCents, hexToRgba } from '@/lib/format'
@@ -332,13 +333,7 @@ export function TransactionFormSheet({
               >
                 {selectedCard ? 'Data da compra' : 'Data'}
               </label>
-              <input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="block h-[46px] w-full min-w-0 rounded-xl border-[1.5px] border-border-strong bg-surface px-3.5 text-[14px] text-text outline-none transition-colors hover:border-text-3 focus:border-primary"
-              />
+              <DateField id="date" value={date} onChange={setDate} />
             </div>
             {canRepeat && (
               <div className="order-3 min-w-0 flex-1 sm:order-2">
@@ -415,7 +410,7 @@ export function TransactionFormSheet({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Ex: Supermercado do mês"
-            className="w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3 py-3 text-[14.5px] text-text outline-none focus:border-primary"
+            className="h-[46px] w-full rounded-xl border-[1.5px] border-border-strong bg-surface px-3.5 text-[14px] text-text outline-none transition-colors hover:border-text-3 focus:border-primary"
           />
         </div>
 

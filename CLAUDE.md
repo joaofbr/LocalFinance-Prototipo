@@ -1,6 +1,9 @@
-# LocalFinance
+# Poupi
 
-Controle financeiro pessoal ou familiar. Monorepo:
+Controle financeiro pessoal ou familiar. O produto se chama **Poupi** (o nome LocalFinance já era de
+outro app de finanças). O código continua com o nome interno `LocalFinance` (pastas, namespaces, banco,
+emissor e audiência do JWT): isso ninguém vê, e trocar o JWT derrubaria todas as sessões. Tudo o que o
+usuário vê (telas, e-mails, título, manifest) diz "Poupi". Monorepo:
 
 - `backend/`: ASP.NET Core (.NET 10), EF Core, PostgreSQL, JWT. Camadas `Domain`, `Application`,
   `Infrastructure` e `Api` (o Domain não depende de ninguém, a Api só conversa com a Application).
@@ -162,6 +165,14 @@ Regras para não vazar dados entre contas:
 
 ## Interface: regras de UX e cor
 
+- **Marca**: o "p" de `components/ui/BrandMark.tsx` é a única fonte; no app use `Logo` (ícone + "poupi"
+  em minúsculo), nunca um ícone genérico. O desenho é geométrico de propósito: círculo perfeito, haste e
+  anel com o mesmo traço, moeda no centro exato. Ajuste mantendo essas três regras; a versão com espessuras
+  diferentes e moeda deslocada foi recusada. Abaixo de 32px a moeda perde o aro. `public/favicon.svg` e os PNG (`icon-192`,
+  `icon-512`, `icon-maskable-512` com fundo sangrado, `apple-touch-icon` de 180px sem cantos) saem do
+  mesmo desenho: mudou a marca, gere todos de novo e suba o `?v=N` dos ícones no `index.html` e no
+  `manifest.webmanifest` (o navegador guarda o favicon à parte e só busca de novo se o endereço mudar).
+
 - **Paleta de identidade** (categorias e avatares): só estas 8 cores, validadas com o
   `validate_palette.js` da skill `dataviz` contra os fundos claro (`#ffffff`) e escuro (`#121a18`):
   `#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`, `#9085e9`, `#e66767`.
@@ -179,6 +190,12 @@ Regras para não vazar dados entre contas:
 - Select é sempre `components/ui/Select` (nunca `<select>` solto): seta própria, 46px nos formulários e
   `compact` (38px) em filtros, com `highlighted` quando o filtro está ativo. Inputs ao lado usam a
   mesma altura. Os temas definem `color-scheme`, para a lista aberta e o calendário seguirem o tema.
+- Data é sempre `components/ui/DateField`: o visual é do app e o `<input type="date">` nativo fica
+  invisível por cima, só para abrir o calendário do sistema. O campo nativo no Safari do iPhone ignora a
+  altura e vaza a largura; não volte a estilizá-lo direto.
+- No iPhone, `preventIosFocusZoom` (em `main.tsx`) põe `maximum-scale=1` no viewport, porque o Safari dá
+  zoom ao focar campo com letra menor que 16px. Só no iOS: lá o zoom com dois dedos continua funcionando;
+  no Android isso o bloquearia.
 - Toda tela que carrega dados trata erro com `QueryError` ("Tentar de novo"), em vez de parecer vazia.
 - Celular (390px):
   - Linha de lista é um botão que abre a edição; nada de ícones de ação espremendo o texto.
@@ -190,6 +207,15 @@ Regras para não vazar dados entre contas:
   capture telas com `playwright-core` usando o Chrome instalado (`channel: 'chrome'`), em 390px e
   1280px, nos dois temas. O limite global da API (150 req/min por IP) derruba capturas em sequência;
   espaçe as rodadas.
+
+## Adicionar à tela inicial
+
+- `features/install`: aviso no topo (só celular, some por 30 dias ao dispensar) e item fixo em "Mais".
+  Não aparece quando o app já roda como ícone (`display-mode: standalone`) nem no Capacitor.
+- Android: se o navegador disparar `beforeinstallprompt`, o botão abre a instalação nativa; senão, mostra o
+  passo a passo pelo menu. iOS não tem instalação programática: sempre o passo a passo do Safari.
+- Sem service worker de propósito: o objetivo é só o ícone abrindo em tela cheia. Um service worker com
+  cache pode prender a versão antiga depois do deploy; só adicione se o app precisar funcionar offline.
 
 ## Front: armadilhas conhecidas
 

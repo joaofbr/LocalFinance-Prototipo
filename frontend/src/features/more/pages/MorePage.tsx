@@ -4,6 +4,8 @@ import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/features/auth/useAuth'
 import { useHousehold } from '@/features/finance/hooks'
 import { useAccount } from '@/features/household/useAccount'
+import { InstallInstructionsSheet } from '@/features/install/InstallInstructionsSheet'
+import { useAddToHomeScreen } from '@/features/install/useAddToHomeScreen'
 import { usePlatformOverview } from '@/features/platform/hooks'
 import {
   CONSOLE_PATH,
@@ -18,11 +20,12 @@ export function MorePage() {
   const isDeveloper = user?.developer ?? false
   const plan = useHousehold().data?.plan
   const pending = usePlatformOverview().data?.pendingAccounts ?? 0
+  const install = useAddToHomeScreen()
 
   return (
     <div className="max-w-[560px]">
       <div className="mb-4 flex items-center gap-3.5 rounded-[20px] border border-border bg-surface p-[18px] shadow-card">
-        <Avatar name={account.name || 'LocalFinance'} color={account.color} size={48} />
+        <Avatar name={account.name || 'Poupi'} color={account.color} size={48} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15.5px] font-bold">
             {account.name || 'Minha conta'}
@@ -55,6 +58,35 @@ export function MorePage() {
           </Link>
         ))}
       </nav>
+
+      {install.available && install.platform && (
+        <>
+          <button
+            type="button"
+            onClick={() => void install.start()}
+            className="mb-4 flex w-full items-center gap-3 rounded-[20px] border border-border bg-surface p-4 text-left shadow-card hover:bg-surface-2"
+          >
+            <span className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-[11px] bg-primary-weak text-primary">
+              <Icon name="smartphone" size={19} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14.5px] font-semibold text-text">
+                Adicionar à tela inicial
+              </span>
+              <span className="block text-[12.5px] text-text-3">
+                Abra o Poupi como um app, em tela cheia.
+              </span>
+            </span>
+            <Icon name="chevronRight" size={18} className="text-text-3" />
+          </button>
+          {install.instructionsOpen && (
+            <InstallInstructionsSheet
+              platform={install.platform}
+              onClose={install.closeInstructions}
+            />
+          )}
+        </>
+      )}
 
       <button
         type="button"
