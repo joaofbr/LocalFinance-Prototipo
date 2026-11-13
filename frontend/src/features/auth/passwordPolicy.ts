@@ -16,7 +16,7 @@ export const PASSWORD_RULES: PasswordRule[] = [
   },
 ]
 
-export type PasswordStrength = 'empty' | 'weak' | 'good' | 'strong'
+export type PasswordStrength = 'empty' | 'weak' | 'medium' | 'strong'
 
 export function meetsPasswordPolicy(value: string): boolean {
   return PASSWORD_RULES.every((rule) => rule.test(value))
@@ -24,7 +24,7 @@ export function meetsPasswordPolicy(value: string): boolean {
 
 export function passwordStrength(value: string): PasswordStrength {
   if (!value) return 'empty'
-  if (!meetsPasswordPolicy(value)) return 'weak'
-  const varied = /\p{Ll}/u.test(value) && /\p{Nd}/u.test(value)
-  return value.length >= 12 && varied ? 'strong' : 'good'
+  const met = PASSWORD_RULES.filter((rule) => rule.test(value)).length
+  if (met === PASSWORD_RULES.length) return 'strong'
+  return met === PASSWORD_RULES.length - 1 ? 'medium' : 'weak'
 }

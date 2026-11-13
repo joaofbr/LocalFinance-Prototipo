@@ -116,7 +116,9 @@ Regras para não vazar dados entre contas:
   1 letra maiúscula e 1 caractere especial (qualquer coisa que não seja letra, dígito ou espaço). Vale no
   cadastro, na troca de senha e no definir/redefinir pelo link; **não** vale no login, para quem tem senha
   antiga continuar entrando. `features/auth/passwordPolicy.ts` espelha a regra para o `PasswordStrengthMeter`
-  (fraca, boa, forte) e os schemas: mudou um, mude o outro.
+  e os schemas: mudou um, mude o outro. O medidor conta requisitos cumpridos (0–1 fraca, 2 média, 3 forte):
+  cumprir os três já é "forte". Ele lê o valor pelo `onChange` do próprio campo (`register(..., { onChange })`),
+  para reagir a cada tecla no primeiro campo.
 
 ## Lançamentos
 

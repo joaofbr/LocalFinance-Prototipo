@@ -1,4 +1,4 @@
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/Button'
@@ -23,10 +23,11 @@ export function ChangePasswordModal({
 }: ChangePasswordModalProps) {
   const [submitError, setSubmitError] = useState('')
 
+  const [passwordValue, setPasswordValue] = useState('')
+
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -36,8 +37,6 @@ export function ChangePasswordModal({
       confirmPassword: '',
     },
   })
-
-  const passwordValue = useWatch({ control, name: 'newPassword' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -96,7 +95,9 @@ export function ChangePasswordModal({
             leadingIcon="lock"
             passwordToggle
             error={errors.newPassword?.message}
-            {...register('newPassword')}
+            {...register('newPassword', {
+              onChange: (event) => setPasswordValue(event.target.value),
+            })}
           />
           <PasswordStrengthMeter value={passwordValue} />
 

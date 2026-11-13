@@ -5,7 +5,7 @@ import type { PasswordStrength } from '../passwordPolicy'
 const LEVELS: Record<PasswordStrength, { label: string; filled: number; bar: string }> = {
   empty: { label: '', filled: 0, bar: '' },
   weak: { label: 'Senha fraca', filled: 1, bar: 'bg-expense' },
-  good: { label: 'Senha boa', filled: 2, bar: 'bg-[#c98500]' },
+  medium: { label: 'Senha média', filled: 2, bar: 'bg-[#c98500]' },
   strong: { label: 'Senha forte', filled: 3, bar: 'bg-primary' },
 }
 
@@ -50,12 +50,6 @@ export function PasswordStrengthMeter({ value }: { value: string }) {
           )
         })}
       </ul>
-
-      {strength === 'good' && (
-        <p className="mt-2 text-[12px] leading-relaxed text-text-3">
-          Para ficar forte: 12 ou mais caracteres, com letras minúsculas e números.
-        </p>
-      )}
     </div>
   )
 }

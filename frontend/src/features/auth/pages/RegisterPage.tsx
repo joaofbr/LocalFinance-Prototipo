@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -19,17 +19,16 @@ export function RegisterPage() {
   const [submitError, setSubmitError] = useState('')
   const [pendingEmail, setPendingEmail] = useState('')
 
+  const [passwordValue, setPasswordValue] = useState('')
+
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
   })
-
-  const passwordValue = useWatch({ control, name: 'password' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -121,7 +120,9 @@ export function RegisterPage() {
           passwordToggle
           placeholder="Crie uma senha"
           error={errors.password?.message}
-          {...register('password')}
+          {...register('password', {
+            onChange: (event) => setPasswordValue(event.target.value),
+          })}
         />
         <PasswordStrengthMeter value={passwordValue} />
 

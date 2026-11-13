@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '@/api/auth'
@@ -46,10 +46,11 @@ export function SetPasswordPage() {
   const [declining, setDeclining] = useState(false)
   const [declined, setDeclined] = useState(false)
 
+  const [passwordValue, setPasswordValue] = useState('')
+
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<SetPasswordFormValues>({
     resolver: zodResolver(setPasswordSchema),
@@ -75,8 +76,6 @@ export function SetPasswordPage() {
       cancelled = true
     }
   }, [token])
-
-  const passwordValue = useWatch({ control, name: 'password' })
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -225,7 +224,9 @@ export function SetPasswordPage() {
           passwordToggle
           placeholder="Crie uma senha"
           error={errors.password?.message}
-          {...register('password')}
+          {...register('password', {
+            onChange: (event) => setPasswordValue(event.target.value),
+          })}
         />
         <PasswordStrengthMeter value={passwordValue} />
 
