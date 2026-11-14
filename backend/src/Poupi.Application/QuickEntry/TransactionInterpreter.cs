@@ -34,9 +34,15 @@ public sealed partial class TransactionInterpreter
     private static readonly HashSet<string> AmountLeadIns = ["de", "por", "r$", "foi", "deu", "custou"];
     private static readonly HashSet<string> CurrencyWords = ["reais", "real", "conto", "contos", "pila", "pilas"];
     private static readonly HashSet<string> IncomeWords =
-        ["recebi", "recebido", "recebida", "recebimento", "ganhei", "entrou", "receita", "caiu"];
+    [
+        "recebi", "recebemos", "recebeu", "receberam", "recebo", "recebe", "recebido", "recebida", "recebidos",
+        "recebimento", "ganhei", "ganhamos", "ganhou", "ganharam", "entrou", "entraram", "caiu", "cairam", "receita",
+    ];
     private static readonly HashSet<string> ExpenseWords =
-        ["paguei", "pago", "paga", "gastei", "gasto", "comprei", "despesa", "saiu", "debitou"];
+    [
+        "paguei", "pagamos", "pagou", "pagaram", "pago", "paga", "gastei", "gastamos", "gastou", "gastaram", "gasto",
+        "comprei", "compramos", "comprou", "compraram", "despesa", "saiu", "sairam", "debitou", "debitaram",
+    ];
     private static readonly HashSet<string> CashWords = ["pix", "debito", "dinheiro", "avista", "especie"];
     private static readonly HashSet<string> CardWords = ["cartao", "credito"];
     private static readonly HashSet<string> SplitWords =
