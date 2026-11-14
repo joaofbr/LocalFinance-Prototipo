@@ -4,6 +4,7 @@ import { QueryError } from '@/components/ui/QueryError'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { MonthSelector } from '@/features/finance/components/MonthSelector'
 import { MonthSummaryCards } from '@/features/finance/components/MonthSummaryCards'
+import { QuickEntryBar } from '@/features/finance/components/QuickEntryBar'
 import { DonutChart } from '@/features/finance/components/DonutChart'
 import { RecentTransactions } from '@/features/finance/components/RecentTransactions'
 import { usePeriod } from '@/features/finance/PeriodContext'
@@ -34,6 +35,8 @@ export function DashboardPage() {
           Novo lançamento
         </Button>
       </div>
+
+      <QuickEntryBar />
 
       {isError ? (
         <div className="rounded-2xl border border-border bg-surface shadow-card">

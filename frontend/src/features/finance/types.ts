@@ -60,6 +60,19 @@ export interface TransactionInput {
   cardId?: string | null
 }
 
+export interface TransactionDraft {
+  type: TransactionType
+  amount: number | null
+  date: string
+  categoryId: string | null
+  memberIds: string[]
+  description: string
+  repeat: number
+  repeatMode: SeriesKind | null
+  cardId: string | null
+  warnings: string[]
+}
+
 export type HouseholdPlan = 'individual' | 'family'
 
 export interface Household {

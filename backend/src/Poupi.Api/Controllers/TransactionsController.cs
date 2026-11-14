@@ -9,8 +9,14 @@ namespace Poupi.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/transactions")]
-public class TransactionsController(ITransactionService service) : ControllerBase
+public class TransactionsController(
+    ITransactionService service,
+    IQuickEntryService quickEntry) : ControllerBase
 {
+    [HttpPost("interpret")]
+    public async Task<TransactionDraftDto> Interpret(InterpretInput input, CancellationToken ct) =>
+        await quickEntry.InterpretAsync(User.HouseholdId(), User.Id(), input, ct);
+
     [HttpGet]
     public async Task<List<TransactionDto>> List(
         [FromQuery] int year,

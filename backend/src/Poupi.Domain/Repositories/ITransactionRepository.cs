@@ -11,6 +11,8 @@ public interface ITransactionRepository
     Task<Dictionary<Guid, int>> CountByCategoryAsync(Guid householdId, CancellationToken ct = default);
     Task<List<MonthlyTotal>> GetMonthlyTotalsAsync(
         Guid householdId, DateOnly from, DateOnly to, CancellationToken ct = default);
+    Task<List<DescriptionUsage>> ListDescriptionUsageAsync(
+        Guid householdId, DateOnly since, CancellationToken ct = default);
     Task<List<Transaction>> ListBySeriesAsync(Guid householdId, Guid seriesId, CancellationToken ct = default);
     Task<List<Transaction>> ListByIdsAsync(
         Guid householdId, IReadOnlyCollection<Guid> ids, CancellationToken ct = default);

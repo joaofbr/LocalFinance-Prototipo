@@ -9,6 +9,7 @@ import { billLabel, billMonth } from '@/features/cards/billing'
 import { useCards } from '@/features/cards/hooks'
 import { readLastCardId, rememberLastCardId } from '@/features/cards/lastCard'
 import { TransactionFormSheet } from './components/TransactionFormSheet'
+import { QuickEntrySheet } from './components/QuickEntrySheet'
 import { SeriesScopeDialog } from './components/SeriesScopeDialog'
 import { usePeriod } from './PeriodContext'
 import {
@@ -20,11 +21,17 @@ import {
   useUpdateTransaction,
 } from './hooks'
 import type { TransactionEntry } from './transactionEntries'
-import type { Transaction, TransactionInput, TransactionScope } from './types'
+import type {
+  Transaction,
+  TransactionDraft,
+  TransactionInput,
+  TransactionScope,
+} from './types'
 
 interface TransactionSheetContextValue {
   openNew: () => void
   openEdit: (entry: TransactionEntry) => void
+  openDraft: (draft: TransactionDraft, text: string, onSaved: () => void) => void
   requestDelete: (transaction: Transaction) => void
 }
 
@@ -33,8 +40,24 @@ const TransactionSheetContext =
 
 type SheetState =
   | { mode: 'closed' }
-  | { mode: 'new' }
+  | { mode: 'new'; draft?: TransactionDraft; onSaved?: () => void }
   | { mode: 'edit'; entry: TransactionEntry }
+  | { mode: 'confirm'; draft: TransactionDraft; text: string; onSaved: () => void }
+
+function draftToInput(draft: TransactionDraft): TransactionInput | null {
+  if (draft.amount === null || !draft.categoryId) return null
+  return {
+    type: draft.type,
+    amount: draft.amount,
+    date: draft.date,
+    categoryId: draft.categoryId,
+    memberIds: draft.memberIds,
+    description: draft.description,
+    repeat: draft.repeat,
+    repeatMode: draft.repeatMode ?? undefined,
+    cardId: draft.cardId,
+  }
+}
 
 const DELETE_MESSAGE: Record<TransactionScope, string> = {
   one: 'Lançamento excluído',
@@ -69,6 +92,9 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
     showToast(getApiErrorMessage(error, fallback), 'warning')
 
   const editing = state.mode === 'edit' ? state.entry : null
+  const formDraft = state.mode === 'new' ? (state.draft ?? null) : null
+  const onSaved =
+    state.mode === 'new' || state.mode === 'confirm' ? state.onSaved : undefined
   const saving = createMutation.isPending || updateMutation.isPending
 
   const applyEdit = (
@@ -114,11 +140,12 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
   const lastCardId = readLastCardId(userId)
   const defaultCardId = cards.some((c) => c.active && c.id === lastCardId) ? lastCardId : ''
 
-  const create = (input: TransactionInput) => {
+  const create = (input: TransactionInput, afterSave?: () => void) => {
     const card = cards.find((c) => c.id === input.cardId)
     createMutation.mutate(input, {
       onSuccess: () => {
         close()
+        afterSave?.()
         if (input.type === 'expense') rememberLastCardId(userId, card?.id ?? '')
         showToast(
           card
@@ -135,15 +162,39 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
       value={{
         openNew: () => setState({ mode: 'new' }),
         openEdit: (entry) => setState({ mode: 'edit', entry }),
+        openDraft: (draft, text, afterSave) =>
+          setState({ mode: 'confirm', draft, text, onSaved: afterSave }),
         requestDelete: setPendingDelete,
       }}
     >
       {children}
 
-      {state.mode !== 'closed' && (
+      {state.mode === 'confirm' && (
+        <QuickEntrySheet
+          text={state.text}
+          draft={state.draft}
+          categories={categoriesQuery.data ?? []}
+          members={membersQuery.data ?? []}
+          cards={cards}
+          hasFamily={hasFamily}
+          currentUserId={userId}
+          saving={createMutation.isPending}
+          onClose={close}
+          onAdjust={() =>
+            setState({ mode: 'new', draft: state.draft, onSaved: state.onSaved })
+          }
+          onConfirm={() => {
+            const input = draftToInput(state.draft)
+            if (input) create(input, state.onSaved)
+          }}
+        />
+      )}
+
+      {(state.mode === 'new' || state.mode === 'edit') && (
         <TransactionFormSheet
-          key={editing?.key ?? 'new'}
+          key={editing?.key ?? (formDraft ? 'draft' : 'new')}
           editing={editing}
+          draft={formDraft}
           defaultDate={defaultDateInPeriod(year, month)}
           categories={categoriesQuery.data ?? []}
           members={membersQuery.data ?? []}
@@ -158,7 +209,7 @@ export function TransactionSheetProvider({ children }: { children: ReactNode }) 
           }
           onSubmit={(input) => {
             if (!editing) {
-              create(input)
+              create(input, onSaved)
               return
             }
             const { transaction } = editing

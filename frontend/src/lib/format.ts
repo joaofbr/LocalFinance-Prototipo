@@ -47,6 +47,17 @@ function toIsoDate(date: Date): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+export function todayIso(): string {
+  return toIsoDate(new Date())
+}
+
+export function daysFromToday(iso: string): number {
+  const [year, month, day] = iso.split('-').map(Number)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((new Date(year, month - 1, day).getTime() - today.getTime()) / 86_400_000)
+}
+
 export function defaultDateInPeriod(year: number, month: number): string {
   const today = new Date()
   const lastDay = new Date(year, month + 1, 0).getDate()

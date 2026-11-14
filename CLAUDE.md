@@ -133,6 +133,24 @@ Regras para não vazar dados entre contas:
 - A data padrão do novo lançamento segue o mês selecionado (`defaultDateInPeriod`); datas locais,
   nunca `toISOString()` (que usa UTC e vira o dia à noite no Brasil).
 
+## Lançamento rápido (texto livre)
+
+- `POST /api/transactions/interpret` só **lê** o texto e devolve um rascunho (`TransactionDraftDto`), sem gravar.
+  O front mostra a `QuickEntrySheet` ("Confirmar lançamento") e grava pelo `POST /api/transactions` de sempre, com
+  as mesmas validações. "Ajustar" abre o formulário completo preenchido com o rascunho.
+- O interpretador (`Application/QuickEntry/TransactionInterpreter.cs`) é só regra: sem IA, nenhum dado sai do
+  servidor. Ordem: data → repetição → valor → cartão → integrantes → palavras de tipo → categoria → descrição. Cada
+  leitor marca os tokens que usou (e as preposições logo antes); o que sobra vira a descrição.
+- Categoria, nesta prioridade: nome da categoria escrito → histórico exato da família (mesma descrição, 12 meses,
+  `ListDescriptionUsageAsync`) → dicionário (`CategoryKeywords.cs`) → histórico por palavra em comum. É o histórico
+  que faz ele aprender: o jeito da família ganha do dicionário.
+- O front manda `today` (data local) e `defaultDate` (`defaultDateInPeriod`): "hoje/ontem" usam `today`; sem data,
+  vale `defaultDate`. Não use a data do servidor (UTC).
+- Integrantes só são lidos no plano família; sem menção, vale o dono do cartão ou quem escreveu.
+- Mudou o interpretador? Teste frases com data e cartão juntos ("presente 150 no cartão ontem"): um leitor que
+  consome preposição vizinha pode comer a palavra de outro. Essa é a base do lançamento por WhatsApp (próxima fase):
+  o canal só troca a entrada, a regra fica aqui.
+
 ## Cartão de crédito
 
 - `Card` (nome, dia de fechamento, dia de vencimento, dono opcional: `OwnerId` nulo = "da família").

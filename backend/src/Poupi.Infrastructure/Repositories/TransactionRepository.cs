@@ -61,6 +61,25 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
             .ToList();
     }
 
+    public async Task<List<DescriptionUsage>> ListDescriptionUsageAsync(
+        Guid householdId, DateOnly since, CancellationToken ct = default)
+    {
+        var rows = await db.Transactions
+            .Where(t => t.HouseholdId == householdId && t.Date >= since)
+            .GroupBy(t => new { t.Description, t.CategoryId, t.Type })
+            .Select(g => new
+            {
+                g.Key.Description,
+                g.Key.CategoryId,
+                g.Key.Type,
+                Count = g.Select(t => t.SeriesId ?? t.Id).Distinct().Count(),
+            })
+            .ToListAsync(ct);
+        return rows
+            .Select(r => new DescriptionUsage(r.Description, r.CategoryId, r.Type, r.Count))
+            .ToList();
+    }
+
     public Task<List<Transaction>> ListBySeriesAsync(
         Guid householdId, Guid seriesId, CancellationToken ct = default) =>
         db.Transactions

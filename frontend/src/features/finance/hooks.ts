@@ -141,6 +141,20 @@ function useInvalidateTransactions() {
   return () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
 }
 
+export function useInterpretTransaction() {
+  return useMutation({
+    mutationFn: ({
+      text,
+      today,
+      defaultDate,
+    }: {
+      text: string
+      today: string
+      defaultDate: string
+    }) => financeApi.interpretTransaction(text, today, defaultDate),
+  })
+}
+
 export function useCreateTransaction() {
   const invalidate = useInvalidateTransactions()
   return useMutation({

@@ -209,6 +209,13 @@ const ICONS = {
     ['circle', { cx: 12, cy: 12, r: 1 }],
     ['circle', { cx: 12, cy: 19, r: 1 }],
   ],
+  send: [
+    ['path', { d: 'M21 3 10.5 13.5' }],
+    ['path', { d: 'M21 3l-6.5 18-4-7.5L3 9.5z' }],
+  ],
+  message: [
+    ['path', { d: 'M20.5 12a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z' }],
+  ],
   smartphone: [
     ['rect', { x: 6, y: 2.5, width: 12, height: 19, rx: 2.5 }],
     ['path', { d: 'M11 18h2' }],

@@ -8,6 +8,7 @@ import type {
   MemberInput,
   MonthlyTrendPoint,
   Transaction,
+  TransactionDraft,
   TransactionInput,
   TransactionScope,
 } from './types'
@@ -102,6 +103,18 @@ export const financeApi = {
       { params: { year, month: month + 1, months } },
     )
     return data.map((point) => ({ ...point, month: point.month - 1 }))
+  },
+
+  async interpretTransaction(
+    text: string,
+    today: string,
+    defaultDate: string,
+  ): Promise<TransactionDraft> {
+    const { data } = await apiClient.post<TransactionDraft>(
+      '/transactions/interpret',
+      { text, today, defaultDate },
+    )
+    return data
   },
 
   async createTransaction(input: TransactionInput): Promise<Transaction> {

@@ -11,12 +11,14 @@ import type {
   Category,
   Member,
   SeriesKind,
+  TransactionDraft,
   TransactionInput,
   TransactionType,
 } from '../types'
 
 interface TransactionFormSheetProps {
   editing: TransactionEntry | null
+  draft: TransactionDraft | null
   defaultDate: string
   categories: Category[]
   members: Member[]
@@ -36,6 +38,7 @@ const REPEAT_OPTIONS = [
 
 export function TransactionFormSheet({
   editing,
+  draft,
   defaultDate,
   categories,
   members,
@@ -49,20 +52,38 @@ export function TransactionFormSheet({
   onSubmit,
 }: TransactionFormSheetProps) {
   const original = editing?.transaction
-  const [type, setType] = useState<TransactionType>(original?.type ?? 'expense')
-  const [cents, setCents] = useState(
-    editing ? Math.round(editing.total * 100) : 0,
+  const draftRepeats = draft !== null && draft.repeatMode !== null && draft.repeat > 1
+  const [type, setType] = useState<TransactionType>(
+    original?.type ?? draft?.type ?? 'expense',
   )
-  const [categoryId, setCategoryId] = useState(original?.categoryId ?? '')
-  const [date, setDate] = useState(original?.date ?? defaultDate)
-  const [memberIds, setMemberIds] = useState<string[]>(() =>
-    editing ? editing.memberIds : currentUserId ? [currentUserId] : [],
+  const [cents, setCents] = useState(() => {
+    if (editing) return Math.round(editing.total * 100)
+    return draft?.amount ? Math.round(draft.amount * 100) : 0
+  })
+  const [categoryId, setCategoryId] = useState(
+    original?.categoryId ?? draft?.categoryId ?? '',
   )
-  const [membersTouched, setMembersTouched] = useState(false)
-  const [cardId, setCardId] = useState(original ? (original.cardId ?? '') : defaultCardId)
-  const [description, setDescription] = useState(original?.description ?? '')
-  const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>('none')
-  const [repeat, setRepeat] = useState(12)
+  const [date, setDate] = useState(original?.date ?? draft?.date ?? defaultDate)
+  const [memberIds, setMemberIds] = useState<string[]>(() => {
+    if (editing) return editing.memberIds
+    if (draft && draft.memberIds.length > 0) return draft.memberIds
+    return currentUserId ? [currentUserId] : []
+  })
+  const [membersTouched, setMembersTouched] = useState(draft !== null)
+  const [cardId, setCardId] = useState(() => {
+    if (original) return original.cardId ?? ''
+    return draft ? (draft.cardId ?? '') : defaultCardId
+  })
+  const [description, setDescription] = useState(
+    original?.description ?? draft?.description ?? '',
+  )
+  const [repeatMode, setRepeatMode] = useState<SeriesKind | 'none'>(
+    draftRepeats ? (draft.repeatMode ?? 'none') : 'none',
+  )
+  const [repeat, setRepeat] = useState(draftRepeats ? draft.repeat : 12)
+  const repeatOptions = REPEAT_OPTIONS.includes(repeat)
+    ? REPEAT_OPTIONS
+    : [...REPEAT_OPTIONS, repeat].sort((a, b) => a - b)
   const [errors, setErrors] = useState<{
     amount?: string
     category?: string
@@ -383,7 +404,7 @@ export function TransactionFormSheet({
                 value={repeat}
                 onChange={(e) => setRepeat(Number(e.target.value))}
               >
-                {REPEAT_OPTIONS.map((count) => (
+                {repeatOptions.map((count) => (
                   <option key={count} value={count}>
                     {splitting ? `${count}x` : `${count} meses`}
                   </option>
