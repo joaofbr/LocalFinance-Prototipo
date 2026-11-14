@@ -86,6 +86,7 @@ export function CategoriesPage() {
         <Button
           type="button"
           className="flex-shrink-0"
+          data-tour="new-category"
           onClick={() => setModal({ editing: null })}
         >
           <Icon name="plus" size={18} />

@@ -58,6 +58,7 @@ export function CardsPage() {
         <Button
           type="button"
           className="flex-shrink-0"
+          data-tour="new-card"
           onClick={() => setModal({ editing: null })}
         >
           <Icon name="plus" size={18} />

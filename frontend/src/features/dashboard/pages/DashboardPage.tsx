@@ -30,8 +30,15 @@ export function DashboardPage() {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <MonthSelector />
-        <Button className="hidden lg:flex" onClick={openNew} type="button">
+        <div data-tour="month">
+          <MonthSelector />
+        </div>
+        <Button
+          className="hidden lg:flex"
+          onClick={openNew}
+          type="button"
+          data-tour="new-transaction"
+        >
           <Icon name="plus" size={18} />
           Novo lançamento
         </Button>
@@ -53,7 +60,7 @@ export function DashboardPage() {
         <DashboardSkeleton />
       ) : (
         <>
-          <div className="mb-[18px]">
+          <div className="mb-[18px]" data-tour="summary">
             <MonthSummaryCards summary={summary} />
           </div>
 

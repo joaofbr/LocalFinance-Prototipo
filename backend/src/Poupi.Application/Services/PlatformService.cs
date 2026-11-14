@@ -84,6 +84,20 @@ public class PlatformService(
         await households.SaveChangesAsync(ct);
     }
 
+    public async Task DeleteAsync(
+        Guid householdId, Guid developerHouseholdId, CancellationToken ct = default)
+    {
+        if (householdId == developerHouseholdId)
+        {
+            throw new ValidationException("Você não pode excluir a própria conta.");
+        }
+        if (await households.GetByIdAsync(householdId, ct) is null)
+        {
+            throw new NotFoundException("Conta não encontrada.");
+        }
+        await households.DeleteWithDataAsync(householdId, ct);
+    }
+
     public async Task ReactivateAsync(Guid householdId, CancellationToken ct = default)
     {
         var household = await GetInStatusAsync(householdId, HouseholdStatus.Suspended, ct);

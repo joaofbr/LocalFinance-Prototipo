@@ -147,6 +147,7 @@ export function MembersPage() {
           <Button
             type="button"
             className="flex-shrink-0"
+            data-tour="new-member"
             onClick={() => setModal({ editing: null })}
           >
             <Icon name="plus" size={18} />

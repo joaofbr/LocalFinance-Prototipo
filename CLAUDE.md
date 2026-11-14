@@ -80,6 +80,9 @@ Regras para não vazar dados entre contas:
   `Platform__DeveloperEmails__0`). Eles recebem o papel `Developer` no token e veem o **Console**
   (`/console`, rotas `api/platform/*`). Cadastro com e-mail de desenvolvedor já nasce ativo: só liste
   e-mails que você controla.
+- **Excluir conta** (Console, `POST api/platform/accounts/{id}/delete`) apaga a família inteira com
+  `HouseholdRepository.DeleteWithDataAsync`, sem e-mail; não vale para a própria conta. Nunca apague direto da tabela
+  `Users`: a família fica órfã (aparece no Console como "Conta sem integrantes") e ainda precisa ser excluída.
 - O Console é o único lugar que atravessa o isolamento entre famílias, então mostra **só dados de conta**
   (titular, e-mail, plano, status, número de integrantes) e números agregados. Nunca exponha lançamentos
   ou valores ali.
@@ -140,8 +143,12 @@ Regras para não vazar dados entre contas:
   só conta nova ou convidado novo vê.
 - `GET /api/onboarding` diz o que mostrar e calcula cada passo dos dados reais (lançamento, cartão, categoria fora
   das padrão, outro integrante, despesa dividida). Não existe "marcar passo como feito": o passo se completa com o uso.
-- Boas-vindas (`OnboardingHost` → `WelcomeSheet`), uma vez por pessoa: "Experimentar" passa o exemplo pelo lançamento
-  rápido. Convidado vê a versão "da família", com o nome do titular (o primeiro usuário da família).
+- Boas-vindas (`OnboardingHost` → `WelcomeSheet`), uma vez por pessoa, abrem o **tour guiado** (`Spotlight`, passos em
+  `guide.ts`): escurece a tela, acende o elemento marcado com `data-tour` e explica num balão com seta. As boas-vindas
+  só contam como vistas no fim do tour. Convidado vê a versão "da família", com o nome do titular (o primeiro usuário).
+- Cada passo do checklist navega com `pointTo(...)` no `state` da rota, e o `OnboardingHost` aponta o botão certo da
+  tela de destino (`data-tour="new-card"`, `new-category`, `new-member`, `quick-entry`); tocar no alvo fecha o
+  destaque. Mexeu num desses botões? Mantenha o `data-tour`. "Ver o tour" reabre o tour (`START_TOUR`).
 - "Primeiros passos" no Início (`GettingStartedCard`). Titular: conta, primeiro lançamento, cartão e categoria própria.
   Convidado: conta, primeiro lançamento dele e cartão.
 - Guia da família: começa quando um admin ativa o modo família (`HouseholdService.SetPlanAsync`), só para quem ativou
@@ -155,6 +162,8 @@ Regras para não vazar dados entre contas:
 - `POST /api/transactions/interpret` só **lê** o texto e devolve um rascunho (`TransactionDraftDto`), sem gravar.
   O front mostra a `QuickEntrySheet` ("Confirmar lançamento") e grava pelo `POST /api/transactions` de sempre, com
   as mesmas validações. "Ajustar" abre o formulário completo preenchido com o rascunho.
+- No Início é um bloco "Lançar rápido" com botão escrito "Lançar" e exemplos tocáveis, de propósito: a versão em
+  linha só com ícone parecia campo de busca.
 - O interpretador (`Application/QuickEntry/TransactionInterpreter.cs`) é só regra: sem IA, nenhum dado sai do
   servidor. Ordem: data → repetição → valor → cartão → integrantes → palavras de tipo → categoria → descrição. Cada
   leitor marca os tokens que usou (e as preposições logo antes); o que sobra vira a descrição.

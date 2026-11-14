@@ -35,6 +35,13 @@ public class PlatformController(IPlatformService service) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("accounts/{id:guid}/delete")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        await service.DeleteAsync(id, User.HouseholdId(), ct);
+        return NoContent();
+    }
+
     [HttpPost("accounts/{id:guid}/reactivate")]
     public async Task<IActionResult> Reactivate(Guid id, CancellationToken ct)
     {

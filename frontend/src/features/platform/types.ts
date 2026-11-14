@@ -21,7 +21,7 @@ export interface Account {
   memberCount: number
 }
 
-export type AccountAction = 'approve' | 'reject' | 'suspend' | 'reactivate'
+export type AccountAction = 'approve' | 'reject' | 'suspend' | 'reactivate' | 'delete'
 
 export interface AccountActionResult {
   emailSent: boolean

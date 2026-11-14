@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Icon } from '@/components/ui/Icon'
-import { BOTTOM_NAV_ITEMS } from './navConfig'
+import { BOTTOM_NAV_ITEMS, MORE_PATH } from './navConfig'
 
 interface BottomNavProps {
   onNewTransaction: () => void
@@ -14,6 +14,7 @@ export function BottomNav({ onNewTransaction }: BottomNavProps) {
           key={item.to}
           to={item.to}
           end={item.to === '/'}
+          data-tour={item.to === MORE_PATH ? 'menu' : undefined}
           className={({ isActive }) =>
             `flex flex-1 flex-col items-center justify-center gap-[3px] py-1.5 text-[11px] ${isActive ? 'font-semibold text-primary' : 'font-medium text-text-3'
             }`
@@ -27,6 +28,7 @@ export function BottomNav({ onNewTransaction }: BottomNavProps) {
         type="button"
         onClick={onNewTransaction}
         aria-label="Novo lançamento"
+        data-tour="new-transaction"
         className="safe-fab absolute left-1/2 flex h-[58px] w-[58px] -translate-x-1/2 items-center justify-center rounded-full border-4 border-bg bg-primary text-primary-fg shadow-card-lg"
       >
         <Icon name="plus" size={26} strokeWidth={2.4} />

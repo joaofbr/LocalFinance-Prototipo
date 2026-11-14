@@ -1,36 +1,28 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
 import { BrandMark } from '@/components/ui/BrandMark'
 import { Icon } from '@/components/ui/Icon'
-
-const EXAMPLE = 'mercado 89,90 ontem'
-const MAX_LENGTH = 160
+import type { IconName } from '@/components/ui/Icon'
 
 interface WelcomeSheetProps {
   firstName: string
   invited: boolean
   familyOwner: string | null
-  trying: boolean
-  onTry: (text: string) => void
+  onStart: () => void
   onClose: () => void
 }
+
+const HIGHLIGHTS: { icon: IconName; text: string }[] = [
+  { icon: 'message', text: 'Lance um gasto escrevendo como você fala' },
+  { icon: 'creditCard', text: 'Cada compra no cartão cai na fatura certa' },
+  { icon: 'users', text: 'Divida as contas com quem mora com você' },
+]
 
 export function WelcomeSheet({
   firstName,
   invited,
   familyOwner,
-  trying,
-  onTry,
+  onStart,
   onClose,
 }: WelcomeSheetProps) {
-  const [text, setText] = useState(EXAMPLE)
-  const value = text.trim()
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    if (value && !trying) onTry(value)
-  }
-
   return (
     <div
       onClick={onClose}
@@ -53,38 +45,23 @@ export function WelcomeSheet({
           </h2>
           <p className="mt-2 text-[14.5px] leading-relaxed text-text-2">
             {invited
-              ? `${familyOwner ?? 'Sua família'} chamou você para organizar as contas da casa juntos. Tudo fica num lugar só, e cada gasto mostra de quem é.`
-              : 'Aqui você organiza o dinheiro da casa sem planilha. Comece pelo jeito mais rápido de lançar.'}
+              ? `${familyOwner ?? 'Sua família'} chamou você para organizar as contas da casa juntos. Em um minuto eu mostro onde fica cada coisa.`
+              : 'Aqui você organiza o dinheiro da casa sem planilha. Em um minuto eu mostro onde fica cada coisa.'}
           </p>
 
-          <form id="welcome-try" onSubmit={submit} className="mt-6">
-            <label
-              htmlFor="welcome-entry"
-              className="mb-2 block text-[13px] font-semibold text-text-2"
-            >
-              Escreva um gasto como você falaria
-            </label>
-            <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border-[1.5px] border-primary bg-surface pl-4 pr-3">
-              <Icon name="message" size={19} className="flex-shrink-0 text-text-3" />
-              <input
-                id="welcome-entry"
-                type="text"
-                value={text}
-                onChange={(event) => setText(event.target.value)}
-                maxLength={MAX_LENGTH}
-                autoComplete="off"
-                enterKeyHint="send"
-                className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-text outline-none"
-              />
-            </div>
-          </form>
-          <p className="mt-2.5 text-[12.5px] leading-relaxed text-text-3">
-            O Poupi entende o valor, a categoria, a data, o cartão e as parcelas. Você confere
-            tudo antes de salvar.
-          </p>
+          <ul className="mt-5 flex flex-col gap-3">
+            {HIGHLIGHTS.map((item) => (
+              <li key={item.icon} className="flex items-center gap-3 text-[14px] font-semibold">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary-weak text-primary">
+                  <Icon name={item.icon} size={18} />
+                </span>
+                {item.text}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex gap-2.5 px-6 pb-[max(18px,env(safe-area-inset-bottom))] pt-6">
+        <div className="flex gap-2.5 px-6 pb-[max(18px,env(safe-area-inset-bottom))] pt-7">
           <button
             type="button"
             onClick={onClose}
@@ -93,17 +70,12 @@ export function WelcomeSheet({
             Agora não
           </button>
           <button
-            type="submit"
-            form="welcome-try"
-            disabled={!value || trying}
-            className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-[14.5px] font-bold text-primary-fg shadow-card-md disabled:opacity-50"
+            type="button"
+            onClick={onStart}
+            className="flex flex-[2] items-center justify-center gap-1.5 rounded-xl bg-primary py-3.5 text-[14.5px] font-bold text-primary-fg shadow-card-md"
           >
-            {trying ? (
-              <span className="inline-block h-[18px] w-[18px] animate-spin rounded-full border-[2.5px] border-white/35 border-t-white" />
-            ) : (
-              <Icon name="send" size={17} />
-            )}
-            Experimentar
+            Mostrar o Poupi
+            <Icon name="chevronRight" size={18} />
           </button>
         </div>
       </div>

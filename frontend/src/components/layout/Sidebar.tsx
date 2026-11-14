@@ -22,7 +22,8 @@ export function Sidebar() {
         <Logo size={40} />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5">
+      <nav className="flex-1">
+        <div data-tour="menu" className="flex flex-col gap-0.5">
         {visibleNavItems(NAV_ITEMS, { isAdmin, isDeveloper, plan }).map((item) => (
           <NavLink
             key={item.to}
@@ -47,6 +48,7 @@ export function Sidebar() {
             )}
           </NavLink>
         ))}
+        </div>
       </nav>
 
       <div className="mt-2.5 border-t border-border pt-3.5">

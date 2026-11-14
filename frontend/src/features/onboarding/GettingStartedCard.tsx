@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { Icon } from '@/components/ui/Icon'
 import { useAuth } from '@/features/auth/useAuth'
 import { useMembers } from '@/features/finance/hooks'
-import { QUICK_ENTRY_FOCUS } from '@/features/finance/quickEntry'
+import { START_TOUR, pointTo } from './guide'
+import type { GuideStep } from './guide'
 import { useDismissChecklist, useDismissFamilyGuide, useOnboarding } from './hooks'
 import type { OnboardingStep, OnboardingStepId } from './types'
 
@@ -60,13 +61,33 @@ export function GettingStartedCard({ familyOnly = false }: GettingStartedCardPro
     },
   }
 
-  const focusQuickEntry = () => navigate('/', { state: { [QUICK_ENTRY_FOCUS]: true } })
+  const guide = (path: string, step: GuideStep) => () => navigate(path, { state: pointTo(step) })
   const actions: Partial<Record<OnboardingStepId, () => void>> = {
-    'first-transaction': focusQuickEntry,
-    card: () => navigate('/cards'),
-    category: () => navigate('/categories'),
-    invite: () => navigate('/members'),
-    split: focusQuickEntry,
+    'first-transaction': guide('/', {
+      target: 'quick-entry',
+      title: 'Escreva aqui',
+      text: 'Digite um gasto como "uber 25 ontem" e toque em Lançar.',
+    }),
+    card: guide('/cards', {
+      target: 'new-card',
+      title: 'Toque em Novo',
+      text: 'Informe o nome do cartão, o dia em que a fatura fecha e o dia em que vence.',
+    }),
+    category: guide('/categories', {
+      target: 'new-category',
+      title: 'Toque em Nova',
+      text: 'Escolha o nome, a cor e o ícone da categoria.',
+    }),
+    invite: guide('/members', {
+      target: 'new-member',
+      title: 'Toque em Cadastrar',
+      text: 'Informe o nome e o e-mail. A pessoa recebe o convite na hora.',
+    }),
+    split: guide('/', {
+      target: 'quick-entry',
+      title: 'Escreva aqui',
+      text: `Experimente "${splitExample}" e toque em Lançar.`,
+    }),
   }
 
   const dismiss = () => (family ? dismissFamilyGuide.mutate() : dismissChecklist.mutate())
@@ -82,6 +103,7 @@ export function GettingStartedCard({ familyOnly = false }: GettingStartedCardPro
 
   return (
     <section
+      data-tour="getting-started"
       aria-labelledby="getting-started-title"
       className="mb-[18px] rounded-2xl border border-border bg-surface p-5 shadow-card"
     >
@@ -112,11 +134,21 @@ export function GettingStartedCard({ familyOnly = false }: GettingStartedCardPro
         ))}
       </ul>
 
-      <div className="mt-1 flex justify-end">
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        {!family && !finished && (
+          <button
+            type="button"
+            onClick={() => navigate('/', { state: START_TOUR })}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-[13px] font-semibold text-primary hover:bg-surface-2"
+          >
+            <Icon name="eye" size={16} />
+            Ver o tour
+          </button>
+        )}
         <button
           type="button"
           onClick={dismiss}
-          className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${
+          className={`ml-auto rounded-lg px-3 py-2 text-[13px] font-semibold ${
             finished ? 'bg-primary text-primary-fg' : 'text-text-3 hover:bg-surface-2'
           }`}
         >

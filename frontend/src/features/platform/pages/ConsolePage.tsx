@@ -17,9 +17,31 @@ const SUCCESS_MESSAGE: Record<AccountAction, (name: string) => string> = {
   reject: (name) => `Cadastro de ${name} recusado`,
   suspend: (name) => `Conta de ${name} suspensa`,
   reactivate: (name) => `Conta de ${name} reativada`,
+  delete: (name) => `Conta de ${name} excluída`,
 }
 
 const AVATAR_COLOR = '#3987e5'
+const ORPHAN_NAME = 'Conta sem integrantes'
+
+function isOrphan(account: Account): boolean {
+  return account.memberCount === 0
+}
+
+function successMessage(account: Account, kind: AccountAction): string {
+  if (isOrphan(account)) return kind === 'delete' ? `${ORPHAN_NAME} excluída` : 'Conta atualizada'
+  return SUCCESS_MESSAGE[kind](account.ownerName.split(' ')[0])
+}
+
+function deleteMessage(account: Account): string {
+  if (isOrphan(account)) {
+    return 'Esta conta ficou sem ninguém (sobrou de um usuário apagado direto no banco). Ela e as categorias dela serão apagadas. Não dá para desfazer.'
+  }
+  return `A conta de ${account.ownerName} (${account.ownerEmail}) será apagada com tudo: ${plural(
+    account.memberCount,
+    'integrante',
+    'integrantes',
+  )}, lançamentos, cartões e categorias. Ninguém recebe e-mail. Não dá para desfazer.`
+}
 
 export function ConsolePage() {
   const { user } = useAuth()
@@ -29,7 +51,7 @@ export function ConsolePage() {
   const action = useAccountAction()
   const [confirming, setConfirming] = useState<{
     account: Account
-    action: 'reject' | 'suspend'
+    action: 'reject' | 'suspend' | 'delete'
   } | null>(null)
 
   if (!user?.developer) return <Navigate to="/" replace />
@@ -45,7 +67,7 @@ export function ConsolePage() {
       {
         onSuccess: (result) => {
           setConfirming(null)
-          const message = SUCCESS_MESSAGE[kind](account.ownerName.split(' ')[0])
+          const message = successMessage(account, kind)
           if (result?.emailSent === false) {
             showToast(
               `${message}, mas o e-mail para ${account.ownerEmail} não saiu. Avise a pessoa por outro meio.`,
@@ -157,7 +179,7 @@ export function ConsolePage() {
                       'integrantes',
                     )} · desde ${formatDate(account.createdAt)}`}
                   >
-                    {!own && (
+                    {!own && !isOrphan(account) && (
                       <button
                         type="button"
                         disabled={busyId === account.id}
@@ -169,6 +191,16 @@ export function ConsolePage() {
                         className="rounded-[10px] border border-border-strong px-3 py-2 text-[12.5px] font-semibold text-text-2 hover:bg-surface-2 disabled:opacity-60"
                       >
                         {suspended ? 'Reativar' : 'Suspender'}
+                      </button>
+                    )}
+                    {!own && (
+                      <button
+                        type="button"
+                        disabled={busyId === account.id}
+                        onClick={() => setConfirming({ account, action: 'delete' })}
+                        className="rounded-[10px] border border-border-strong px-3 py-2 text-[12.5px] font-semibold text-expense hover:bg-expense-bg disabled:opacity-60"
+                      >
+                        Excluir
                       </button>
                     )}
                   </AccountRow>
@@ -187,6 +219,18 @@ export function ConsolePage() {
           destructive
           busy={action.isPending}
           onConfirm={() => run(confirming.account, 'reject')}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
+      {confirming?.action === 'delete' && (
+        <ConfirmDialog
+          title="Excluir conta"
+          message={deleteMessage(confirming.account)}
+          confirmLabel="Excluir"
+          destructive
+          busy={action.isPending}
+          onConfirm={() => run(confirming.account, 'delete')}
           onCancel={() => setConfirming(null)}
         />
       )}
@@ -281,20 +325,30 @@ function AccountRow({
   muted?: boolean
   children: ReactNode
 }) {
+  const orphan = isOrphan(account)
   return (
     <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3 border-b border-border px-4 py-3.5 last:border-b-0">
       <div className="flex min-w-0 flex-1 basis-[240px] items-center gap-3">
-        <Avatar name={account.ownerName} color={AVATAR_COLOR} size={40} muted={muted} />
+        <Avatar
+          name={orphan ? '?' : account.ownerName}
+          color={AVATAR_COLOR}
+          size={40}
+          muted={muted || orphan}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[14.5px] font-semibold">{account.ownerName}</span>
+            <span className="truncate text-[14.5px] font-semibold">
+              {orphan ? ORPHAN_NAME : account.ownerName}
+            </span>
             {badge && (
               <span className="flex-shrink-0 rounded-full bg-neutral-bg px-2 py-[2px] text-[11px] font-semibold text-neutral">
                 {badge}
               </span>
             )}
           </div>
-          <div className="truncate text-[12.5px] text-text-3">{account.ownerEmail}</div>
+          <div className="truncate text-[12.5px] text-text-3">
+            {orphan ? 'Ficou sem ninguém: pode excluir' : account.ownerEmail}
+          </div>
           <div className="truncate text-[12px] text-text-3">{meta}</div>
         </div>
       </div>

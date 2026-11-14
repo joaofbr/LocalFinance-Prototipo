@@ -11,4 +11,5 @@ public interface IPlatformService
     Task<AccountActionResultDto> RejectAsync(Guid householdId, CancellationToken ct = default);
     Task SuspendAsync(Guid householdId, Guid developerHouseholdId, CancellationToken ct = default);
     Task ReactivateAsync(Guid householdId, CancellationToken ct = default);
+    Task DeleteAsync(Guid householdId, Guid developerHouseholdId, CancellationToken ct = default);
 }
