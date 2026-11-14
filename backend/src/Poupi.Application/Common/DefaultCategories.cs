@@ -20,6 +20,9 @@ public static class DefaultCategories
         ("Investimentos", CategoryKind.Both, "#3987e5", "trendingUp"),
     ];
 
+    public static bool IsDefault(string name) =>
+        Templates.Any(t => string.Equals(t.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+
     public static List<Category> For(Guid householdId) =>
         Templates
             .Select(t => new Category

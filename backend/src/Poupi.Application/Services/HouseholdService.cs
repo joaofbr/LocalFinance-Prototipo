@@ -15,7 +15,7 @@ public class HouseholdService(
         ToDto(await GetOrThrowAsync(householdId, ct));
 
     public async Task<HouseholdDto> SetPlanAsync(
-        Guid householdId, string plan, CancellationToken ct = default)
+        Guid householdId, Guid userId, string plan, CancellationToken ct = default)
     {
         var household = await GetOrThrowAsync(householdId, ct);
         var target = EnumMapping.ParseHouseholdPlan(plan);
@@ -24,6 +24,13 @@ public class HouseholdService(
         {
             throw new ValidationException(
                 "Para voltar ao modo individual, desative antes os outros integrantes.");
+        }
+
+        if (target == HouseholdPlan.Family
+            && household.Plan != HouseholdPlan.Family
+            && await users.GetInHouseholdAsync(householdId, userId, ct) is { FamilyGuideStartedAt: null } user)
+        {
+            user.FamilyGuideStartedAt = DateTime.UtcNow;
         }
 
         household.Plan = target;

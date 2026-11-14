@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrandMark } from '@/components/ui/BrandMark'
 import { Icon } from '@/components/ui/Icon'
+import { useWelcomePending } from '@/features/onboarding/hooks'
 import { InstallSheet } from './InstallSheet'
 import { useAddToHomeScreen } from './useAddToHomeScreen'
 
@@ -47,16 +48,17 @@ export function InstallBanner() {
     useAddToHomeScreen()
   const [hidden, setHidden] = useState(isSnoozed)
   const [openedOnWelcome, setOpenedOnWelcome] = useState(false)
+  const welcomePending = useWelcomePending()
 
   useEffect(() => {
-    if (!available || hidden || wasWelcomed()) return
+    if (!available || hidden || welcomePending || wasWelcomed()) return
     const timer = window.setTimeout(() => {
       markWelcomed()
       setOpenedOnWelcome(true)
       openSheet()
     }, WELCOME_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [available, hidden, openSheet])
+  }, [available, hidden, welcomePending, openSheet])
 
   if (!available || !platform || hidden) return null
 

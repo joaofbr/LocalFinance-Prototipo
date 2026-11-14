@@ -133,6 +133,23 @@ Regras para não vazar dados entre contas:
 - A data padrão do novo lançamento segue o mês selecionado (`defaultDateInPeriod`); datas locais,
   nunca `toISOString()` (que usa UTC e vira o dia à noite no Brasil).
 
+## Onboarding (primeiro acesso)
+
+- Estado por pessoa, no servidor: `User.WelcomeSeenAt`, `ChecklistDismissedAt`, `FamilyGuideStartedAt` e
+  `FamilyGuideDismissedAt`. A migration `Onboarding` marcou boas-vindas e checklist como vistos para quem já existia:
+  só conta nova ou convidado novo vê.
+- `GET /api/onboarding` diz o que mostrar e calcula cada passo dos dados reais (lançamento, cartão, categoria fora
+  das padrão, outro integrante, despesa dividida). Não existe "marcar passo como feito": o passo se completa com o uso.
+- Boas-vindas (`OnboardingHost` → `WelcomeSheet`), uma vez por pessoa: "Experimentar" passa o exemplo pelo lançamento
+  rápido. Convidado vê a versão "da família", com o nome do titular (o primeiro usuário da família).
+- "Primeiros passos" no Início (`GettingStartedCard`). Titular: conta, primeiro lançamento, cartão e categoria própria.
+  Convidado: conta, primeiro lançamento dele e cartão.
+- Guia da família: começa quando um admin ativa o modo família (`HouseholdService.SetPlanAsync`), só para quem ativou
+  e só na primeira ativação. Aparece no Início (no lugar do checklist) e em Integrantes (no lugar do aviso antigo).
+- A folha de instalação espera as boas-vindas fecharem (`useWelcomePending`): nunca duas folhas ao mesmo tempo.
+- Enquanto houver guia pendente, toda mutation bem-sucedida atualiza o onboarding (`useRefreshOnboardingOnMutations`);
+  depois disso, não há custo.
+
 ## Lançamento rápido (texto livre)
 
 - `POST /api/transactions/interpret` só **lê** o texto e devolve um rascunho (`TransactionDraftDto`), sem gravar.

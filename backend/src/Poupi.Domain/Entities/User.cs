@@ -14,4 +14,8 @@ public class User
     public bool Active { get; set; } = true;
     public string Color { get; set; } = "#059669";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? WelcomeSeenAt { get; set; }
+    public DateTime? ChecklistDismissedAt { get; set; }
+    public DateTime? FamilyGuideStartedAt { get; set; }
+    public DateTime? FamilyGuideDismissedAt { get; set; }
 }

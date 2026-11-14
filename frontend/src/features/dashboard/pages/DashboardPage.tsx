@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { MonthSelector } from '@/features/finance/components/MonthSelector'
 import { MonthSummaryCards } from '@/features/finance/components/MonthSummaryCards'
 import { QuickEntryBar } from '@/features/finance/components/QuickEntryBar'
+import { GettingStartedCard } from '@/features/onboarding/GettingStartedCard'
 import { DonutChart } from '@/features/finance/components/DonutChart'
 import { RecentTransactions } from '@/features/finance/components/RecentTransactions'
 import { usePeriod } from '@/features/finance/PeriodContext'
@@ -37,6 +38,7 @@ export function DashboardPage() {
       </div>
 
       <QuickEntryBar />
+      <GettingStartedCard />
 
       {isError ? (
         <div className="rounded-2xl border border-border bg-surface shadow-card">

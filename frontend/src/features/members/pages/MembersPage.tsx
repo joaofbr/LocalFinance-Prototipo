@@ -20,6 +20,8 @@ import {
   useUpdateMember,
 } from '@/features/finance/hooks'
 import { useChangePlan } from '@/features/household/useChangePlan'
+import { GettingStartedCard } from '@/features/onboarding/GettingStartedCard'
+import { useOnboarding } from '@/features/onboarding/hooks'
 import { MemberFormModal } from '../components/MemberFormModal'
 
 export function MembersPage() {
@@ -34,6 +36,7 @@ export function MembersPage() {
   const resendMutation = useResendMemberInvite()
   const deleteMutation = useDeleteMember()
   const { user } = useAuth()
+  const familyGuideActive = (useOnboarding().data?.familyGuide.length ?? 0) > 0
 
   const [modal, setModal] = useState<{ editing: Member | null } | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState<Member | null>(null)
@@ -133,6 +136,7 @@ export function MembersPage() {
 
   return (
     <div>
+      <GettingStartedCard familyOnly />
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="text-[13.5px] text-text-2">
           {isAdmin
@@ -151,7 +155,7 @@ export function MembersPage() {
         )}
       </div>
 
-      {isAdmin && !membersQuery.isLoading && members.length === 1 && (
+      {isAdmin && !familyGuideActive && !membersQuery.isLoading && members.length === 1 && (
         <div className="mb-3.5 flex items-start gap-3 rounded-2xl border border-border bg-primary-weak p-4">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
             <Icon name="users" size={18} />

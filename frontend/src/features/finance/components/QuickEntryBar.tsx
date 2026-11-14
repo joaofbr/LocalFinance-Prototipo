@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Icon } from '@/components/ui/Icon'
 import { useToast } from '@/components/ui/ToastProvider'
 import { getApiErrorMessage } from '@/lib/apiError'
@@ -7,12 +8,23 @@ import { defaultDateInPeriod, todayIso } from '@/lib/format'
 import { usePeriod } from '../PeriodContext'
 import { useTransactionSheet } from '../TransactionSheetProvider'
 import { useInterpretTransaction } from '../hooks'
+import { wantsQuickEntryFocus } from '../quickEntry'
 
 const MAX_LENGTH = 160
 
 export function QuickEntryBar() {
   const [text, setText] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const location = useLocation()
+  const navigate = useNavigate()
   const { year, month } = usePeriod()
+
+  useEffect(() => {
+    if (!wantsQuickEntryFocus(location.state)) return
+    inputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    inputRef.current?.focus({ preventScroll: true })
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, navigate])
   const { openDraft } = useTransactionSheet()
   const { showToast } = useToast()
   const interpret = useInterpretTransaction()
@@ -42,6 +54,7 @@ export function QuickEntryBar() {
       <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border border-border bg-surface pl-4 pr-[7px] shadow-card transition-colors focus-within:border-primary">
         <Icon name="message" size={19} className="flex-shrink-0 text-text-3" />
         <input
+          ref={inputRef}
           id="quick-entry"
           type="text"
           value={text}

@@ -26,6 +26,15 @@ public class TransactionRepository(AppDbContext db) : ITransactionRepository
     public Task<int> CountByUserAsync(Guid userId, CancellationToken ct = default) =>
         db.Transactions.CountAsync(t => t.UserId == userId, ct);
 
+    public Task<bool> HasAnyAsync(Guid householdId, CancellationToken ct = default) =>
+        db.Transactions.AnyAsync(t => t.HouseholdId == householdId, ct);
+
+    public Task<bool> HasAnyByUserAsync(Guid householdId, Guid userId, CancellationToken ct = default) =>
+        db.Transactions.AnyAsync(t => t.HouseholdId == householdId && t.UserId == userId, ct);
+
+    public Task<bool> HasSplitAsync(Guid householdId, CancellationToken ct = default) =>
+        db.Transactions.AnyAsync(t => t.HouseholdId == householdId && t.SplitTotal > 1, ct);
+
     public async Task<Dictionary<Guid, int>> CountByCategoryAsync(
         Guid householdId, CancellationToken ct = default)
     {

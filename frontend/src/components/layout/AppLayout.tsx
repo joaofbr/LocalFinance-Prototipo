@@ -7,6 +7,7 @@ import {
   useTransactionSheet,
 } from '@/features/finance/TransactionSheetProvider'
 import { InstallBanner } from '@/features/install/InstallBanner'
+import { OnboardingHost } from '@/features/onboarding/OnboardingHost'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { PullToRefresh } from './PullToRefresh'
@@ -56,6 +57,7 @@ function AppShell() {
       </main>
 
       <BottomNav onNewTransaction={openNew} />
+      <OnboardingHost />
     </div>
   )
 }

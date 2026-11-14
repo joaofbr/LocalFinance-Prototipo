@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import { getApiErrorMessage } from '@/lib/apiError'
 import { financeApi } from '@/features/finance/api'
 import type { HouseholdPlan } from '@/features/finance/types'
+import { ONBOARDING_KEY } from '@/features/onboarding/hooks'
 
 export function useChangePlan() {
   const queryClient = useQueryClient()
@@ -15,6 +16,7 @@ export function useChangePlan() {
     onSuccess: (household) => {
       queryClient.setQueryData(['household'], household)
       void queryClient.invalidateQueries({ queryKey: ['members'] })
+      void queryClient.invalidateQueries({ queryKey: ONBOARDING_KEY })
       if (household.plan === 'family') {
         showToast('Modo família ativado')
         navigate('/members')

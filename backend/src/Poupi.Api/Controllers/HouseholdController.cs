@@ -18,5 +18,5 @@ public class HouseholdController(IHouseholdService service) : ControllerBase
     [HttpPut("plan")]
     [Authorize(Roles = "Admin")]
     public async Task<HouseholdDto> SetPlan(SetPlanInput input, CancellationToken ct) =>
-        await service.SetPlanAsync(User.HouseholdId(), input.Plan, ct);
+        await service.SetPlanAsync(User.HouseholdId(), User.Id(), input.Plan, ct);
 }
